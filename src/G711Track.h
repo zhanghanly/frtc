@@ -25,7 +25,7 @@ public:
     /**
      * 返回编码类型
      */
-    CodecId codecId() override{
+    CodecId codecId() override {
         return _codecId;
     }
 
@@ -39,21 +39,21 @@ public:
     /**
      * 返回音频采样率
      */
-    int sampleRate() override{
+    int sampleRate() override {
         return _sampleRate;
     }
 
     /**
      * 返回音频采样位数，一般为16或8
      */
-    int sampleBytes() override{
+    int sampleBytes() override {
         return _sampleBytes;
     }
 
     /**
      * 返回音频通道数
      */
-    int channels() override{
+    int channels() override {
         return _channels;
     }
 

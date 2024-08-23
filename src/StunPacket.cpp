@@ -1,17 +1,17 @@
 ﻿#include <cstring>
 #include <iostream>
 #include "StunPacket.h"
-#include "Function.h"
 #include "EncryptionAlgo.h"
+#include "Utility.h"
 #include "Log.h"
 
 namespace frtc {
 
-BufferSp stun_encode_hmac2(char* hmac_buf, const int32_t hmac_buf_len) {
+RWBufferSp stun_encode_hmac2(char* hmac_buf, const int32_t hmac_buf_len) {
 	char buf[1460];
 	uint32_t ret=0;
 	
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes(StunMessageIntegrity);
 	stream->write2bytes(hmac_buf_len);
@@ -20,10 +20,10 @@ BufferSp stun_encode_hmac2(char* hmac_buf, const int32_t hmac_buf_len) {
 	return stream;
 }
 
-BufferSp stun_encode_fingerprint2(uint32_t crc32) {
+RWBufferSp stun_encode_fingerprint2(uint32_t crc32) {
 	char buf[1460];
 	uint32_t ret=0;
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes((int16_t)StunFingerprint);
 	stream->write2bytes(4);
@@ -32,13 +32,13 @@ BufferSp stun_encode_fingerprint2(uint32_t crc32) {
 	return stream;
 }
 
-BufferSp stun_encode_rtcusername(StunPacket* pkt) {
+RWBufferSp stun_encode_rtcusername(StunPacket* pkt) {
 	char buf[1460];
 	uint32_t ret=0;
 	char username[128];
 	sprintf(username, "%s:%s", pkt->remote_ufrag.c_str(), pkt->local_ufrag.c_str());
 
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes(StunUsername);
 	stream->write2bytes(strlen(username));
@@ -51,10 +51,10 @@ BufferSp stun_encode_rtcusername(StunPacket* pkt) {
 	return stream;
 }
 
-BufferSp stun_encode_mapped_address_ipv6(StunPacket* pkt,struct sockaddr_in6* addr) {
+RWBufferSp stun_encode_mapped_address_ipv6(StunPacket* pkt,struct sockaddr_in6* addr) {
 	char buf[1460];
 	uint32_t ret=0;
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes(StunXorMappedAddress);
 	stream->write2bytes(20);
@@ -63,7 +63,6 @@ BufferSp stun_encode_mapped_address_ipv6(StunPacket* pkt,struct sockaddr_in6* ad
 	stream->write2bytes(pkt->mapped_port ^ (kStunMagicCookie >> 16));
 	unsigned char cookie[4]={0x21,0x12,0xA4,0x42};
 	//uint8_t* p=(uint8_t*)(&addr->sin6_addr.s6_addr);
-
 	//int32_t i=0;
 	//for(i=0; i<4; i++){
 	//	stream->write1bytes(p[i]^ cookie[i]);
@@ -75,7 +74,7 @@ BufferSp stun_encode_mapped_address_ipv6(StunPacket* pkt,struct sockaddr_in6* ad
 	return stream;
 }
 
-//int32_t stun_encode_binding_request(StunPacket* pkt, Buffer* stream,char* pwd,char* username,uint32_t username_len) {
+//int32_t stun_encode_binding_request(StunPacket* pkt, RWBuffer* stream,char* pwd,char* username,uint32_t username_len) {
 //	stream->write2bytes(StunBindingRequest);
 //	stream->write2bytes(username_len);// +mapped_address_len);
 //	stream->write4bytes(kStunMagicCookie);
@@ -117,22 +116,22 @@ BufferSp stun_encode_mapped_address_ipv6(StunPacket* pkt,struct sockaddr_in6* ad
 //#endif
 //
 //	//MessageIntegrity
-//	BufferSp hmac = stun_encode_hmac2(hmac_buf, hmac_buf_len);
+//	RWBufferSp hmac = stun_encode_hmac2(hmac_buf, hmac_buf_len);
 //	stream->writeBytes(hmac->data(), hmac->size());
 //	stream->data()[2] = ((stream->pos() - 20 + 8) & 0x0000FF00) >> 8;
 //	stream->data()[3] = ((stream->pos() - 20 + 8) & 0x000000FF);
 //
 //	//Fingerprint
 //	uint32_t crc32 = yang_crc32_ieee(stream->data(), stream->pos(), 0)^ 0x5354554E;
-//	BufferSp fingerprint = stun_encode_fingerprint2(crc32);
+//	RWBufferSp fingerprint = stun_encode_fingerprint2(crc32);
 //	stream->writeBytes(fingerprint->data(), fingerprint->size());
 //	stream->data()[2] = ((stream->pos() - 20) & 0x0000FF00) >> 8;
 //	stream->data()[3] = ((stream->pos() - 20) & 0x000000FF);
 //}
 
-//int32_t stun_encode_binding_response(StunPacket* pkt, char* pwd, Buffer* stream) {
-//	BufferSp property_username = stun_encode_rtcusername(pkt);
-//	BufferSp mapped_address = stun_encode_mapped_address_ipv4(pkt);
+//int32_t stun_encode_binding_response(StunPacket* pkt, char* pwd, RWBuffer* stream) {
+//	RWBufferSp property_username = stun_encode_rtcusername(pkt);
+//	RWBufferSp mapped_address = stun_encode_mapped_address_ipv4(pkt);
 //
 //	stream->write2bytes(StunBindingSuccessResponse);
 //	stream->write2bytes(property_username_len + mapped_address_len);
@@ -154,19 +153,19 @@ BufferSp stun_encode_mapped_address_ipv6(StunPacket* pkt,struct sockaddr_in6* ad
 //	uint32_t  hmac_buf_len = 20;
 //#endif
 //
-//	BufferSp hmac = stun_encode_hmac2(hmac_buf, hmac_buf_len);
+//	RWBufferSp hmac = stun_encode_hmac2(hmac_buf, hmac_buf_len);
 //	stream->writeBytes(hmac->data(), hmac->size());
 //	stream->data()[2] = ((stream->pos() - 20 + 8) & 0x0000FF00) >> 8;
 //	stream->data()[3] = ((stream->pos() - 20 + 8) & 0x000000FF);
 //
 //	uint32_t crc32 = crc32_ieee(stream->data(), stream->pos(), 0) ^ 0x5354554E;
-//	BufferSp fingerprint = stun_encode_fingerprint2(crc32);
+//	RWBufferSp fingerprint = stun_encode_fingerprint2(crc32);
 //	stream->writeBytes(fingerprint->data(),fingerprint->size());
 //	stream->data()[2] = ((stream->pos() - 20) & 0x0000FF00) >> 8;
 //	stream->data()[3] = ((stream->pos() - 20) & 0x000000FF);
 //}
 
-int32_t stun_encode_binding_request2(StunPacket* pkt, Buffer* stream, const char* pwd, const char* username, uint32_t username_len){
+int32_t stun_encode_binding_request2(StunPacket* pkt, RWBuffer* stream, const char* pwd, const char* username, uint32_t username_len){
 	//write_2bytes(stream,BindingRequest);
 	stream->write2bytes(pkt->message_type);
 	stream->write2bytes(username_len); //+mapped_address_len);
@@ -199,13 +198,13 @@ int32_t stun_encode_binding_request2(StunPacket* pkt, Buffer* stream, const char
 	}
 	
 	//MessageIntegrity
-	BufferSp hmac = stun_encode_hmac2(hmac_buf, hmac_buf_len);
+	RWBufferSp hmac = stun_encode_hmac2(hmac_buf, hmac_buf_len);
 	stream->writeBytes(hmac->data(), hmac->pos());
 	stream->data()[2] = ((stream->pos() - 20 + 8) & 0x0000FF00) >> 8;
 	stream->data()[3] = ((stream->pos() - 20 + 8) & 0x000000FF);
 
 	uint32_t crc32 = crc32_ieee(stream->data(), stream->pos(), 0)^ 0x5354554E;
-	BufferSp fingerprint = stun_encode_fingerprint2(crc32);
+	RWBufferSp fingerprint = stun_encode_fingerprint2(crc32);
 	stream->writeBytes(fingerprint->data(), fingerprint->pos());
 	stream->data()[2] = ((stream->pos() - 20) & 0x0000FF00) >> 8;
 	stream->data()[3] = ((stream->pos() - 20) & 0x000000FF);
@@ -213,7 +212,7 @@ int32_t stun_encode_binding_request2(StunPacket* pkt, Buffer* stream, const char
 	return 0;
 }
 
-//int32_t RtcStun::encodeStunServer(Buffer* stream,void* pudp,char* username,char* ice_pwd) {
+//int32_t RtcStun::encodeStunServer(RWBuffer* stream,void* pudp,char* username,char* ice_pwd) {
 //	YangRtcSocket* udp=(YangRtcSocket*)pudp;
 //
 //	char tid[13];
@@ -239,7 +238,7 @@ int32_t stun_encode_binding_request2(StunPacket* pkt, Buffer* stream, const char
 //}
 
 int32_t RtcStun::decodeStunServer(StunPacket* pkt,char* buf, const int32_t nb_buf) {
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, nb_buf);
 	if (stream->left() < 20) {
 		LOG_ERROR("ERROR_RTC_STUN invalid stun packet, size=%d", stream->size());
@@ -324,7 +323,7 @@ int32_t RtcStun::decodeStunServer(StunPacket* pkt,char* buf, const int32_t nb_bu
 }
 
 int32_t RtcStun::decode(StunPacket* pkt, char* buf,  int32_t nb_buf) {
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, nb_buf);
 	if (stream->left() < 20) {
 		LOG_ERROR("ERROR_RTC_STUN invalid stun packet, size=%d", stream->size());
@@ -404,7 +403,7 @@ int32_t RtcStun::decode(StunPacket* pkt, char* buf,  int32_t nb_buf) {
 }
 
 int32_t RtcStun::decode2(char* buf,  int32_t nb_buf) {
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, nb_buf);
 	if (stream->left() < 20) {
 		LOG_ERROR("ERROR_RTC_STUN invalid stun packet, size=%d", stream->size());
@@ -442,7 +441,7 @@ int32_t RtcStun::decode2(char* buf,  int32_t nb_buf) {
 //int32_t RtcStun::createResponseStunPacket(StunPacket* request,void* session) {
 //	YangRtcSession* session=(YangRtcSession*)psession;
 //	char s[1024] = { 0 };
-//	YangBuffer stream;
+//	YangRWBuffer stream;
 //	yang_init_buffer(&stream,s, 1024);
 //	YangStunPacket packet;
 //	yang_memset(&packet,0,sizeof(YangStunPacket));
@@ -460,20 +459,20 @@ int32_t RtcStun::decode2(char* buf,  int32_t nb_buf) {
 
 int32_t RtcStun::createRequestStunPacket(void* psession,char* ice_pwd) {
 	char s[1024] = { 0 };
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(s, 1024);
 	StunPacket packet;
 	packet.message_type = StunBindingRequest;
 	//strcpy(packet.local_ufrag, session->local_ufrag);
 	//strcpy(packet.remote_ufrag, session->remote_ufrag);
 
-	//BufferSp property_username = stun_encode_rtcusername(&packet);
+	//RWBufferSp property_username = stun_encode_rtcusername(&packet);
 	//stun_encode_binding_request(&packet, &stream, ice_pwd, property_username, property_username_len);
 
 	return 0;
 }
 
-int32_t StunLib::encode_header(StunPacket* pkt, Buffer* stream, int32_t len) {
+int32_t StunLib::encode_header(StunPacket* pkt, RWBuffer* stream, int32_t len) {
 	stream->write2bytes(pkt->message_type);
 	stream->write2bytes(len);
 	stream->write4bytes(kStunMagicCookie);
@@ -483,10 +482,10 @@ int32_t StunLib::encode_header(StunPacket* pkt, Buffer* stream, int32_t len) {
 	return 0;
 }
 
-BufferSp StunLib::encode_username(char* username) {
+RWBufferSp StunLib::encode_username(char* username) {
 	char buf[1460];
 	uint32_t ret=0;
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes(StunUsername);
 	stream->write2bytes(strlen(username));
@@ -499,10 +498,10 @@ BufferSp StunLib::encode_username(char* username) {
 	return stream;
 }
 
-BufferSp StunLib::encode_password(char* password) {
+RWBufferSp StunLib::encode_password(char* password) {
 	char buf[1460];
 	uint32_t ret=0;
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes(StunPassword);
 	stream->write2bytes(strlen(password));
@@ -515,13 +514,13 @@ BufferSp StunLib::encode_password(char* password) {
 	return stream;
 }
 
-BufferSp StunLib::encode_transport(uint8_t protocol) {
+RWBufferSp StunLib::encode_transport(uint8_t protocol) {
 	char buf[1460];
 	uint32_t ret = 0;
 	char tmp[4] = {0};
 	tmp[0] = protocol;
 	
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes(StunRequestTransport);
 	stream->write2bytes(4);
@@ -530,11 +529,11 @@ BufferSp StunLib::encode_transport(uint8_t protocol) {
 	return stream;
 }
 
-BufferSp StunLib::encode_data(char* data) {
+RWBufferSp StunLib::encode_data(char* data) {
 	char buf[1460];
 	uint32_t ret=0;
 	
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes((int16_t)StunData);
 	stream->write2bytes(strlen(data));
@@ -547,11 +546,11 @@ BufferSp StunLib::encode_data(char* data) {
 	return stream;
 }
 
-BufferSp StunLib::encode_realm(char* realm) {
+RWBufferSp StunLib::encode_realm(char* realm) {
 	char buf[1460];
 	uint32_t ret=0;
 
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes((int16_t)StunRealm);
 	stream->write2bytes(strlen(realm));
@@ -564,10 +563,10 @@ BufferSp StunLib::encode_realm(char* realm) {
 	return stream;
 }
 
-BufferSp StunLib::encode_nonce(char* nonce, uint16_t len) {
+RWBufferSp StunLib::encode_nonce(char* nonce, uint16_t len) {
 	char buf[1460];
 	uint32_t ret=0;
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes((int16_t)StunNonce);
 	stream->write2bytes((int16_t)len);
@@ -580,11 +579,11 @@ BufferSp StunLib::encode_nonce(char* nonce, uint16_t len) {
 	return stream;
 }
 
-BufferSp StunLib::encode_lifetime(int32_t lifetime) {
+RWBufferSp StunLib::encode_lifetime(int32_t lifetime) {
 	char buf[1460];
 	uint32_t ret=0;
 
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes((int16_t)StunLifetime);
 	stream->write2bytes(4);
@@ -593,11 +592,11 @@ BufferSp StunLib::encode_lifetime(int32_t lifetime) {
 	return stream;
 }
 
-BufferSp StunLib::encode_channelNumber(uint16_t channelNum) {
+RWBufferSp StunLib::encode_channelNumber(uint16_t channelNum) {
 	char buf[1460];
 	uint32_t ret=0;
 	uint16_t reserve=0;
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes((int16_t)StunChannelNumber);
 	stream->write2bytes(4);
@@ -607,10 +606,10 @@ BufferSp StunLib::encode_channelNumber(uint16_t channelNum) {
 	return stream;
 }
 
-BufferSp StunLib::encode_peer_address_ipv4(uint32_t address, uint16_t port) {
+RWBufferSp StunLib::encode_peer_address_ipv4(uint32_t address, uint16_t port) {
 	char buf[1460];
 	uint32_t ret=0;
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes(StunXorPeerAddress);
 	stream->write2bytes(8);
@@ -622,7 +621,7 @@ BufferSp StunLib::encode_peer_address_ipv4(uint32_t address, uint16_t port) {
 	return stream;
 }
 
-BufferSp StunLib::encode_hmac(Buffer *pstream, char* pwd) {
+RWBufferSp StunLib::encode_hmac(RWBuffer *pstream, char* pwd) {
 	uint32_t ret=0;
 	char buf[1460];
 	char hmac_buf[20] = {0};
@@ -631,7 +630,7 @@ BufferSp StunLib::encode_hmac(Buffer *pstream, char* pwd) {
 		return nullptr;
 	}
 
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes(StunMessageIntegrity);
 	stream->write2bytes(hmac_buf_len);
@@ -644,13 +643,13 @@ BufferSp StunLib::encode_hmac(Buffer *pstream, char* pwd) {
 	return stream;
 }
 
-BufferSp StunLib::encode_fingerprint(Buffer *pstream) {
+RWBufferSp StunLib::encode_fingerprint(RWBuffer *pstream) {
 	char buf[1460];
 	uint32_t ret = 0;
 	//Fingerprint
 	uint32_t crc32 = crc32_ieee(pstream->data(), pstream->pos(), 0)^ 0x5354554E;
 
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes((int16_t)StunFingerprint);
 	stream->write2bytes(4);
@@ -659,10 +658,10 @@ BufferSp StunLib::encode_fingerprint(Buffer *pstream) {
 	return stream;
 }
 
-BufferSp StunLib::encode_mapped_address_ipv4(StunPacket* pkt) {
+RWBufferSp StunLib::encode_mapped_address_ipv4(StunPacket* pkt) {
 	char buf[1460];
 	uint32_t ret=0;
-	BufferSp stream = std::make_shared<Buffer>();
+	RWBufferSp stream = std::make_shared<RWBuffer>();
 	stream->init(buf, sizeof(buf));
 	stream->write2bytes(StunXorMappedAddress);
 	stream->write2bytes(8);
@@ -674,14 +673,14 @@ BufferSp StunLib::encode_mapped_address_ipv4(StunPacket* pkt) {
 	return stream;
 }
 
-int32_t StunLib::encode_request(StunMessageType type, Buffer* stream, SessionInfo remote, SessionInfo local) {
+int32_t StunLib::encode_request(StunMessageType type, RWBuffer* stream, SessionInfo remote, SessionInfo local) {
 	StunPacket packet;
 	packet.message_type = type;
 	packet.transcation_id = generateRandMixedStr(12);
 	packet.remote_ufrag = remote.iceUfrag;
 	packet.local_ufrag = local.iceUfrag;
 
-	BufferSp property_username = stun_encode_rtcusername(&packet);
+	RWBufferSp property_username = stun_encode_rtcusername(&packet);
 	stun_encode_binding_request2(&packet, stream, remote.icePwd.c_str(), property_username->data(), property_username->pos());
 
 	return 0;

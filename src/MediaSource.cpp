@@ -1,17 +1,11 @@
 #include "MediaSource.h"
+#include "RtcTransport.h"
 #include "Log.h"
 
 namespace frtc {
 
 MediaSource::MediaSource() 
             : _allTrackReady(false) {}
-
-//void MediaSource::inputFrame(FramePtr frame) {
-//    auto frameType = frame->mediaType();
-//    if (_trackMap.find(frameType) != _trackMap.end()) {
-//        _trackMap[frameType]->inputFrame(frame);
-//    }
-//}
 
 void MediaSource::addTrack(TrackPtr track) { 
     if (_allTrackReady) {
@@ -23,8 +17,11 @@ void MediaSource::addTrack(TrackPtr track) {
     _trackMap[trackType] = track;
     track->addObservre([this](FramePtr frame) {
         if (_allTrackReady) {
+            std::cout << "track is ready" << std::endl;
             onTrackFrame(frame);
         } else {
+            std::cout << "track map size=" <<  _trackMap.size() << std::endl;
+            std::cout << "track is not ready" << std::endl;
             /*cache first*/
             auto& cacheLst = _cachedFrame[frame->mediaType()];
             while (cacheLst.size() > 50) {
@@ -33,6 +30,7 @@ void MediaSource::addTrack(TrackPtr track) {
             cacheLst.push_back(frame);
         }
     });
+    checkTrackIfReady();
 }
     
 void MediaSource::checkTrackIfReady(void) {
@@ -52,13 +50,14 @@ void MediaSource::checkTrackIfReady(void) {
 }
 
 void MediaSource::inputFrame(FramePtr frame) {
+    std::cout << "media source input frame" << std::endl;
     auto frameType = frame->mediaType();
     if (_trackMap.find(frameType) == _trackMap.end()) {
+        std::cout << "not found track in map" << std::endl;
         return;
     }
 
     _trackMap[frameType]->inputFrame(frame);
-    checkTrackIfReady();
 }
 
 TrackPtr MediaSource::getTrack(MediaType type) {
@@ -80,8 +79,14 @@ std::vector<TrackPtr> MediaSource::getAllTracks() {
     return tracks;
 }
 
-void RtcMediaSource::onTrackFrame(FramePtr frame) {
 
+RtcMediaSource::RtcMediaSource(RtcTransport* transport)
+              : _transport(transport) {} 
+
+void RtcMediaSource::onTrackFrame(FramePtr frame) {
+    if (_transport) {
+        _transport->onFrame(frame);
+    }
 }
 
 void RtcMediaSource::onTrackReady() {

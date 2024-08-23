@@ -1,5 +1,5 @@
-#ifndef FRTC_FUNCTION_H
-#define FRTC_FUNCTION_H
+#ifndef FRTC_UTILITY_H
+#define FRTC_UTILITY_H
 
 #include <string>
 #include <vector>

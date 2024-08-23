@@ -16,7 +16,8 @@ enum class CodecId {
     g711a,
     g711u,
     opus,
-    aac
+    aac,
+    none
 };
 
 class MediaCodec {
@@ -31,6 +32,8 @@ public:
 std::string getMediaType(MediaType);
 
 std::string getCodecName(CodecId);
+
+CodecId getCodecId(std::string&);
 
 }
 

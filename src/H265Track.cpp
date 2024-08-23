@@ -1,3 +1,4 @@
+#include <iostream>
 #include "H265Track.h"
 
 namespace frtc {
@@ -46,12 +47,17 @@ bool H265Track::ready() {
 }
 
 void H265Track::inputFrame(FramePtr frame) {
+    std::cout << "h265 track input frame" << std::endl;
     H265FrameType type = getH265FrameType(frame->data()[frame->prefix()]);
     if (!frame->configFrame() && type != H265FrameType::NAL_SEI_PREFIX) {
         if (ready()) {
             inputFrame_1(frame);
+        } else {
+            return;
         }
     }
+
+    inputFrame_1(frame);
 }
 
 int32_t H265Track::height() {
@@ -94,40 +100,40 @@ void H265Track::inputFrame_1(FramePtr frame) {
 
 void H265Track::insertConfigFrame(FramePtr frame) {
     if (!_vps.empty()) {
-        //FrameImpPtr vpsFrame = std::make_shared<FrameImp>();
-        //vpsFrame->_isConfig = true;
-        //vpsFrame->_pts = frame->pts();
-        //vpsFrame->_prefix_size = 4;
-        //vpsFrame->_buffer->append(0x00); 
-        //vpsFrame->_buffer->append(0x00); 
-        //vpsFrame->_buffer->append(0x00); 
-        //vpsFrame->_buffer->append(0x01); 
-        //vpsFrame->_buffer->append(_vps.c_str(), _vps.size());
-        //Track::inputFrame(vpsFrame);
+        FrameImpPtr vpsFrame = std::make_shared<FrameImp>();
+        vpsFrame->_isConfig = true;
+        vpsFrame->_pts = frame->pts();
+        vpsFrame->_prefix_size = 4;
+        vpsFrame->_buffer->append(0x00); 
+        vpsFrame->_buffer->append(0x00); 
+        vpsFrame->_buffer->append(0x00); 
+        vpsFrame->_buffer->append(0x01); 
+        vpsFrame->_buffer->append(_vps.c_str(), _vps.size());
+        Track::inputFrame(vpsFrame);
     }
-    if (_sps.empty()) {
-        //FrameImpPtr spsFrame = std::make_shared<FrameImp>();
-        //spsFrame->_isConfig = true;
-        //spsFrame->_pts = frame->pts();
-        //spsFrame->_prefix_size = 4;
-        //spsFrame->_buffer->append(0x00); 
-        //spsFrame->_buffer->append(0x00); 
-        //spsFrame->_buffer->append(0x00); 
-        //spsFrame->_buffer->append(0x01); 
-        //spsFrame->_buffer->append(_sps.c_str(), _sps.size());
-        //Track::inputFrame(spsFrame);
+    if (!_sps.empty()) {
+        FrameImpPtr spsFrame = std::make_shared<FrameImp>();
+        spsFrame->_isConfig = true;
+        spsFrame->_pts = frame->pts();
+        spsFrame->_prefix_size = 4;
+        spsFrame->_buffer->append(0x00); 
+        spsFrame->_buffer->append(0x00); 
+        spsFrame->_buffer->append(0x00); 
+        spsFrame->_buffer->append(0x01); 
+        spsFrame->_buffer->append(_sps.c_str(), _sps.size());
+        Track::inputFrame(spsFrame);
     }
-    if (_pps.empty()) {
-        //FrameImpPtr ppsFrame = std::make_shared<FrameImp>();
-        //ppsFrame->_isConfig = true;
-        //ppsFrame->_pts = frame->pts();
-        //ppsFrame->_prefix_size = 4;
-        //ppsFrame->_buffer->append(0x00); 
-        //ppsFrame->_buffer->append(0x00); 
-        //ppsFrame->_buffer->append(0x00); 
-        //ppsFrame->_buffer->append(0x01); 
-        //ppsFrame->_buffer->append(_pps.c_str(), _pps.size());
-        //Track::inputFrame(ppsFrame);
+    if (!_pps.empty()) {
+        FrameImpPtr ppsFrame = std::make_shared<FrameImp>();
+        ppsFrame->_isConfig = true;
+        ppsFrame->_pts = frame->pts();
+        ppsFrame->_prefix_size = 4;
+        ppsFrame->_buffer->append(0x00); 
+        ppsFrame->_buffer->append(0x00); 
+        ppsFrame->_buffer->append(0x00); 
+        ppsFrame->_buffer->append(0x01); 
+        ppsFrame->_buffer->append(_pps.c_str(), _pps.size());
+        Track::inputFrame(ppsFrame);
     }
 }
 

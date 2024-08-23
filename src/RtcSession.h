@@ -15,15 +15,17 @@ public:
 
     void setRemoteSdp(const std::string&);
 
+    SdpSp getRtmoteSdp();
+
     std::string getRemoteFingerprint();
 
-    Candidate getCandidate();
+    CandidatePtr getCandidate();
 
     void setLocalIceInfo(const SessionInfo&);
     
-    SessionInfo getLocalIceInfo();
+    SessionInfoPtr getLocalIceInfo();
 
-    SessionInfo getRemoteIceInfo();
+    SessionInfoPtr getRemoteIceInfo();
 
     bool alive();
 

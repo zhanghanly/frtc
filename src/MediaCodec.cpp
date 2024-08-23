@@ -32,4 +32,22 @@ std::string getCodecName(CodecId id) {
     }
 }
 
+CodecId getCodecId(std::string& name) {
+    if (name == "h264" || name == "H264") {
+        return CodecId::h264;
+    } else if (name == "h265" || name == "H265") {
+        return CodecId::h265;
+    } else if (name == "pcma" || name == "PCMA") {
+        return CodecId::g711a;
+    } else if (name == "pcmu" || name == "PCMU") {
+        return CodecId::g711u;
+    } else if (name == "aac" || name == "AAC") {
+        return CodecId::aac;
+    } else if (name == "opus" || name == "OPUS") {
+        return CodecId::opus;
+    } else {
+        return CodecId::none;
+    }
+}
+
 }

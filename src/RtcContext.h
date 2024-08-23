@@ -3,10 +3,12 @@
 
 #include <memory>
 #include <thread>
-#include "RtcSession.h"
-#include "Socket.h"
 #include "DtlsTransport.h"
 #include "SrtpSession.h"
+#include "RtcTransport.h"
+#include "RtcSession.h"
+#include "Socket.h"
+#include "Ticker.h"
 
 namespace frtc {
 
@@ -56,11 +58,11 @@ private:
 
     void onDtlsData(const char* data, int32_t size);
 
-    void onRtpData(const char* data, int32_t size);
+    void onRtpData(char* data, int32_t size);
 
-    void onRtcpData(const char* data, int32_t size);
+    void onRtcpData(char* data, int32_t size);
 
-    void dispatchPeerData(const char*, int32_t);
+    void dispatchPeerData(char*, int32_t);
 
 private:
     RtcSessionSp _session;
@@ -68,6 +70,8 @@ private:
     SrtpSessionSp _srtpSessionSend;
     SrtpSessionSp _srtpSessionRecv;
     DtlsTransportSp _dtlsTransport; 
+    RtcTransportSp _transport; 
+    TickerSp _ticker;
     std::thread _work;
 };
 

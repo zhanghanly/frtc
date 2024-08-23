@@ -13,9 +13,13 @@ public:
 
     int32_t size();
 
+    bool empty();
+
     void append(char);
 
     void append(const char*, int32_t);
+
+    void assign(const char*, int32_t);
 
     void clear();
 
@@ -61,13 +65,13 @@ public:
     ~FrameFromPtr() override = default;
     
     FrameFromPtr(
-        CodecId codec_id, char *ptr, size_t size, uint64_t dts, uint64_t pts = 0, size_t prefix_size = 0,
+        CodecId codec_id, char* ptr, size_t size, uint64_t dts, uint64_t pts = 0, size_t prefix_size = 0,
         bool is_key = false)
         : FrameFromPtr(ptr, size, dts, pts, prefix_size, is_key) {
         _codec_id = codec_id;
     }
 
-    FrameFromPtr(char *ptr, size_t size, uint64_t dts, uint64_t pts = 0, size_t prefix_size = 0, bool is_key = false) {
+    FrameFromPtr(char* ptr, size_t size, uint64_t dts, uint64_t pts = 0, size_t prefix_size = 0, bool is_key = false) {
         _ptr = ptr;
         _size = size;
         _dts = dts;
@@ -109,19 +113,37 @@ public:
     } 
     
     FrameImp(
-        CodecId codec_id, char *ptr, size_t size, uint64_t dts, uint64_t pts = 0, size_t prefix_size = 0,
+        CodecId codec_id, char* ptr, size_t size, uint64_t dts, uint64_t pts = 0, size_t prefix_size = 0,
         bool is_key = false)
         : FrameImp(ptr, size, dts, pts, prefix_size, is_key) {
         _codec_id = codec_id;
     }
 
-    FrameImp(char *ptr, size_t size, uint64_t dts, uint64_t pts = 0, size_t prefix_size = 0, bool is_key = false) {
+    FrameImp(char* ptr, size_t size, uint64_t dts, uint64_t pts = 0, size_t prefix_size = 0, bool is_key = false) {
         _buffer = std::make_shared<FrameBuffer>();
         _buffer->append(ptr, size);
         _dts = dts;
         _pts = pts;
         _prefix_size = prefix_size;
         _isKey = is_key;
+    }
+
+    template <typename C = FrameImp>
+    static std::shared_ptr<C> create() {
+#if 0
+        static ResourcePool<C> packet_pool;
+        static onceToken token([]() {
+            packet_pool.setSize(1024);
+        });
+        auto ret = packet_pool.obtain2();
+        ret->_buffer.clear();
+        ret->_prefix_size = 0;
+        ret->_dts = 0;
+        ret->_pts = 0;
+        return ret;
+#else
+        return std::shared_ptr<C>(new C());
+#endif
     }
 
     char* data() override { return _buffer->data(); }
@@ -134,6 +156,7 @@ public:
     bool configFrame() override { return _isConfig; }
     void setCodecId(CodecId codec_id) { _codec_id = codec_id; }
     CodecId codecId() override { return _codec_id;}
+    MediaType mediaType() override { return _type; }
 
 public:
     bool _isKey;
@@ -143,6 +166,7 @@ public:
     uint64_t _pts = 0;
     int32_t _prefix_size;
     CodecId _codec_id;
+    MediaType _type;
 };
 
 typedef std::shared_ptr<FrameImp> FrameImpPtr; 

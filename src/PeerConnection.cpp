@@ -15,6 +15,8 @@ void PeerConnection::connnectSignalServer(const std::string& url) {
         _signalClient->setReadCb([this](SignalErr code, const std::string& sdp) {
             if (code == SignalErr::SUCCESS) {
                 _context->setRemoteSdp(sdp);
+                std::cout << "set remote sdp" << std::endl;
+
             } else {
                 LOG_ERROR("%s", "connect server failed");
             }
@@ -27,6 +29,7 @@ void PeerConnection::connnectSignalServer(const std::string& url) {
     
 void PeerConnection::startEstablishConnection() {
     _context->startConnectPeer();
+    std::cout << "start connect peer" << std::endl;
 }
 
 void PeerConnection::setVideoCallback(OnRecieveVideoFrame callback) {

@@ -1,37 +1,37 @@
 #include <cstring>
-#include "Buffer.h"
+#include "RWBuffer.h"
 
 namespace frtc {
 
-void Buffer::init(char* b, int32_t nn){
+void RWBuffer::init(char* b, int32_t nn){
 	_head = _data = b;
 	_size = nn;
 }
 
-void Buffer::destroy(){
+void RWBuffer::destroy(){
 }
 
-int32_t Buffer::pos() {
+int32_t RWBuffer::pos() {
     return (int)(_head - _data);
 }
     
-char* Buffer::data() {
+char* RWBuffer::data() {
     return _data;
 }
     
-int32_t Buffer::size() {
+int32_t RWBuffer::size() {
     return _size;
 }
 
-int32_t Buffer::left() {
+int32_t RWBuffer::left() {
     return _size - (int)(_head - _data);
 }
 
-int32_t Buffer::empty() {
+int32_t RWBuffer::empty() {
     return !_data || (_head >= _data + _size);
 }
 
-int32_t Buffer::require(int32_t required_size) {
+int32_t RWBuffer::require(int32_t required_size) {
     if (required_size < 0) {
         return 0;
     }
@@ -39,15 +39,15 @@ int32_t Buffer::require(int32_t required_size) {
     return required_size <= _size - (_head - _data);
 }
 
-void Buffer::skip(int32_t size) {
+void RWBuffer::skip(int32_t size) {
     _head += size;
 }
 
-char Buffer::read1bytes() {
+char RWBuffer::read1bytes() {
     return *_head++;
 }
 
-int16_t Buffer::read2bytes() {
+int16_t RWBuffer::read2bytes() {
     int16_t value;
     char* pp = (char*)&value;
     pp[1] = *_head++;
@@ -56,7 +56,7 @@ int16_t Buffer::read2bytes() {
     return value;
 }
 
-uint16_t Buffer::readChar2bytes(char* buf) {
+uint16_t RWBuffer::readChar2bytes(char* buf) {
     uint16_t value=0;
     char* pp = (char*)&value;
     pp[1] = buf[0];
@@ -65,7 +65,7 @@ uint16_t Buffer::readChar2bytes(char* buf) {
     return value;
 }
 
-int16_t Buffer::readLe2bytes() {
+int16_t RWBuffer::readLe2bytes() {
     int16_t value;
     char* pp = (char*)&value;
     pp[1] = *_head++;
@@ -74,7 +74,7 @@ int16_t Buffer::readLe2bytes() {
     return value;
 }
 
-int32_t Buffer::read3bytes() {
+int32_t RWBuffer::read3bytes() {
     int32_t value = 0x00;
     char* pp = (char*)&value;
     pp[2] = *_head++;
@@ -84,7 +84,7 @@ int32_t Buffer::read3bytes() {
     return value;
 }
 
-int32_t Buffer::readLe3bytes() {
+int32_t RWBuffer::readLe3bytes() {
     int32_t value = 0x00;
     char* pp = (char*)&value;
     pp[0] = *_head++;
@@ -94,7 +94,7 @@ int32_t Buffer::readLe3bytes() {
     return value;
 }
 
-int32_t Buffer::read4bytes() {
+int32_t RWBuffer::read4bytes() {
     int32_t value=0;
     char* pp = (char*)&value;
     pp[3] = *_head++;
@@ -105,7 +105,7 @@ int32_t Buffer::read4bytes() {
     return value;
 }
 
-uint32_t Buffer::readChar4bytes(char* buf) {
+uint32_t RWBuffer::readChar4bytes(char* buf) {
     uint32_t value;
     char* pp = (char*)&value;
     pp[3] = buf[0];
@@ -116,7 +116,7 @@ uint32_t Buffer::readChar4bytes(char* buf) {
     return value;
 }
 
-int32_t Buffer::readLe4bytes() {
+int32_t RWBuffer::readLe4bytes() {
     int32_t value;
     char* pp = (char*)&value;
     pp[0] = *_head++;
@@ -127,7 +127,7 @@ int32_t Buffer::readLe4bytes() {
     return value;
 }
 
-int64_t Buffer::read8bytes() {
+int64_t RWBuffer::read8bytes() {
     int64_t value;
     char* pp = (char*)&value;
     pp[7] = *_head++;
@@ -142,7 +142,7 @@ int64_t Buffer::read8bytes() {
     return value;
 }
 
-int64_t Buffer::readLe8bytes() {
+int64_t RWBuffer::readLe8bytes() {
     int64_t value;
     char* pp = (char*)&value;
     pp[0] = *_head++;
@@ -157,28 +157,28 @@ int64_t Buffer::readLe8bytes() {
     return value;
 }
 
-void Buffer::readBytes(char* data, int32_t size) {
+void RWBuffer::readBytes(char* data, int32_t size) {
     memcpy(data, _head, size);
     _head += size;
 }
 
-void Buffer::write1bytes(char value) {
+void RWBuffer::write1bytes(char value) {
     *_head++ = value;
 }
 
-void Buffer::write2bytes(int16_t value) {
+void RWBuffer::write2bytes(int16_t value) {
     char* pp = (char*)&value;
     *_head++ = pp[1];
     *_head++ = pp[0];
 }
 
-void Buffer::writeLe2bytes(int16_t value) {
+void RWBuffer::writeLe2bytes(int16_t value) {
     char* pp = (char*)&value;
     *_head++ = pp[0];
     *_head++ = pp[1];
 }
 
-void Buffer::write4bytes(int32_t value) {
+void RWBuffer::write4bytes(int32_t value) {
     char* pp = (char*)&value;
     *_head++ = pp[3];
     *_head++ = pp[2];
@@ -186,7 +186,7 @@ void Buffer::write4bytes(int32_t value) {
     *_head++ = pp[0];
 }
 
-void Buffer::writeLe4bytes(int32_t value) {
+void RWBuffer::writeLe4bytes(int32_t value) {
     char* pp = (char*)&value;
     *_head++ = pp[0];
     *_head++ = pp[1];
@@ -194,21 +194,21 @@ void Buffer::writeLe4bytes(int32_t value) {
     *_head++ = pp[3];
 }
 
-void Buffer::write3bytes(int32_t value) {
+void RWBuffer::write3bytes(int32_t value) {
     char* pp = (char*)&value;
     *_head++ = pp[2];
     *_head++ = pp[1];
     *_head++ = pp[0];
 }
 
-void Buffer::writeLe3bytes(int32_t value) {
+void RWBuffer::writeLe3bytes(int32_t value) {
     char* pp = (char*)&value;
     *_head++ = pp[0];
     *_head++ = pp[1];
     *_head++ = pp[2];
 }
 
-void Buffer::write8bytes(int64_t value) {
+void RWBuffer::write8bytes(int64_t value) {
     char* pp = (char*)&value;
     *_head++ = pp[7];
     *_head++ = pp[6];
@@ -220,7 +220,7 @@ void Buffer::write8bytes(int64_t value) {
     *_head++ = pp[0];
 }
 
-void Buffer::writeLe8bytes(int64_t value) {
+void RWBuffer::writeLe8bytes(int64_t value) {
     char* pp = (char*)&value;
     *_head++ = pp[0];
     *_head++ = pp[1];
@@ -232,12 +232,12 @@ void Buffer::writeLe8bytes(int64_t value) {
     *_head++ = pp[7];
 }
 
-void Buffer::writeBytes(const char* data, int32_t size) {
+void RWBuffer::writeBytes(const char* data, int32_t size) {
     memcpy(_head, data, size);
     _head += size;
 }
 
-void Buffer::writeCString(const char* data) {
+void RWBuffer::writeCString(const char* data) {
 	int32_t datasize=strlen(data);
     memcpy(_head, data, datasize);
     _head += datasize;

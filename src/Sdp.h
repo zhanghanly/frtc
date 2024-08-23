@@ -32,6 +32,8 @@ struct SessionInfo {
 	std::string setup;
 };
 
+typedef std::shared_ptr<SessionInfo> SessionInfoPtr;
+
 struct MediaPayload {
 	int32_t payloadType;
 	int32_t clockRate;
@@ -41,6 +43,19 @@ struct MediaPayload {
 	std::vector<std::string> rtcpFbs;
 };
 
+typedef std::shared_ptr<MediaPayload> MediaPayloadPtr;
+
+struct SSRCInfo {
+	uint32_t ssrc;
+	uint32_t rtx_ssrc;
+    std::string cname;
+    std::string msid;
+    std::string mslabel;
+    std::string label;
+};
+
+typedef std::shared_ptr<SSRCInfo> SSRCInfoPtr;
+
 struct Candidate {
 	int32_t port;
 	std::string ip;
@@ -48,7 +63,11 @@ struct Candidate {
 	std::string protocol;
 };
 
+typedef std::shared_ptr<Candidate> CandidatePtr;
+
 struct MediaDesc {
+	MediaDesc();
+	
 	int32_t port;
 	int32_t sctp_port;
 	int32_t rtcp_mux;
@@ -64,13 +83,17 @@ struct MediaDesc {
 	std::string msidTracker;
 	std::string protos;
 	std::string iceMode;
+	bool support_rtx = false;
 
-	Candidate candidate;
-	SessionInfo sessionInfo;
+	SSRCInfoPtr ssrc;	
+	CandidatePtr candidate;
+	SessionInfoPtr sessionInfo;
 	std::map<int32_t, std::string> extmap;
-	std::vector<MediaPayload> payloads;
+	std::vector<MediaPayloadPtr> payloads;
+	std::vector<uint32_t> ssrc_group;
 };
 
+typedef std::shared_ptr<MediaDesc> MediaDescPtr;
 
 class Sdp {
 public:
@@ -89,15 +112,17 @@ public:
 	std::string unicastAddress;
 	std::string sessionName;
 	SessionInfo sessionInfo;
-
 	std::string groupPolicy;
+	//MediaDesc videoDesc;
+	//MediaDesc audioDesc;
+	std::vector<MediaDescPtr> medias;
 
-	MediaDesc videoDesc;
-	MediaDesc audioDesc;
+	MediaDescPtr videoDesc(void);
+	MediaDescPtr audioDesc(void);
 
 private:
-	std::string mediaTypeLst(const MediaDesc&);	
-	std::string payloadInfoLst(const MediaDesc&); 
+	std::string mediaTypeLst(const MediaDescPtr);	
+	std::string payloadInfoLst(const MediaDescPtr); 
 };
 
 typedef std::shared_ptr<Sdp> SdpSp;

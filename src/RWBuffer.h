@@ -1,12 +1,12 @@
-#ifndef FRTC_BUFFER_H
-#define FRTC_BUFFER_H
+#ifndef FRTC_RW_BUFFER_H
+#define FRTC_RW_BUFFER_H
 
 #include <cstdint>
 #include <memory>
 
 namespace frtc {
 
-class Buffer {
+class RWBuffer {
 public:
     void init(char* b, int32_t nn);
     void destroy();
@@ -70,7 +70,7 @@ private:
     int32_t _size;
 };
 
-typedef std::shared_ptr<Buffer> BufferSp;
+typedef std::shared_ptr<RWBuffer> RWBufferSp;
 
 }
 

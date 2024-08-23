@@ -35,12 +35,22 @@ private:
     std::map<MediaType, std::list<FramePtr>> _cachedFrame;
 };
 
+typedef std::shared_ptr<MediaSource> MediaSourceSp;
+
+class RtcTransport;
+
 class RtcMediaSource : public MediaSource {
 public:
     ~RtcMediaSource() override = default;
+    
+    RtcMediaSource(RtcTransport*);
+
     virtual void onTrackFrame(FramePtr);
 
     virtual void onTrackReady();
+
+private:
+    RtcTransport* _transport;
 };
 
 }

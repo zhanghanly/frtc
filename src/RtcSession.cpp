@@ -1,6 +1,7 @@
+#include <iostream>
 #include <cstdlib>
 #include "RtcSession.h"
-#include "Function.h"
+#include "Utility.h"
 
 namespace frtc {
 
@@ -16,27 +17,52 @@ std::string RtcSession::createLocalSdp() {
 }
 
 void RtcSession::setRemoteSdp(const std::string& sdp) {
+    std::cout << "remote sdp=" << sdp << std::endl;
     _remoteSdp->parse(sdp);
 }
+    
+SdpSp RtcSession::getRtmoteSdp() {
+    return _remoteSdp;
+}
 
-Candidate RtcSession::getCandidate() {
-    return (_remoteSdp->videoDesc).candidate;
+CandidatePtr RtcSession::getCandidate() {
+    MediaDescPtr video = _remoteSdp->videoDesc();
+    if (!video) {
+        return nullptr;
+    }
+    
+    return video->candidate;
 }
     
 void RtcSession::setLocalIceInfo(const SessionInfo& info) {
     _localSdp->sessionInfo = info;
 }
 
-SessionInfo RtcSession::getLocalIceInfo() {
-    return (_localSdp->videoDesc).sessionInfo;
+SessionInfoPtr RtcSession::getLocalIceInfo() {
+    MediaDescPtr video = _localSdp->videoDesc();
+    if (!video) {
+        return nullptr;
+    }
+
+    return video->sessionInfo;
 }
 
-SessionInfo RtcSession::getRemoteIceInfo() {
-    return (_remoteSdp->videoDesc).sessionInfo;
+SessionInfoPtr RtcSession::getRemoteIceInfo() {
+    MediaDescPtr video = _remoteSdp->videoDesc();
+    if (!video) {
+        return nullptr;
+    }
+    
+    return video->sessionInfo; 
 }
 
 std::string RtcSession::getRemoteFingerprint() {
-    return (_remoteSdp->videoDesc).sessionInfo.fingerprint;
+    MediaDescPtr video = _remoteSdp->videoDesc();
+    if (!video) {
+        return "";
+    }
+    
+    return video->sessionInfo->fingerprint;
 }
 
 bool RtcSession::alive() {

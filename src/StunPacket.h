@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include <string>
-#include "Buffer.h"
+#include "RWBuffer.h"
 #include "Sdp.h"
 
 namespace frtc {
@@ -95,7 +95,7 @@ typedef struct {
 
 class RtcStun {
 public:
-	int32_t encodeStunServer(Buffer* stream, void* pudp, char* username, char* ice_pwd);
+	int32_t encodeStunServer(RWBuffer* stream, void* pudp, char* username, char* ice_pwd);
 	int32_t decodeStunServer(StunPacket* pkt, char* buf, const int32_t nb_buf);
 	int32_t decode(StunPacket* pkt, char* buf, int32_t nb_buf);
 	int32_t decode2(char* buf, int32_t nb_buf);
@@ -105,20 +105,20 @@ public:
 
 class StunLib {
 public:
-	int32_t encode_header(StunPacket* pkt, Buffer* stream, int32_t len);
-	BufferSp encode_username(char* usernamer);
-	BufferSp encode_password(char* password);
-	BufferSp encode_transport(uint8_t protocol);
-	BufferSp encode_data(char* data);
-	BufferSp encode_realm(char* realm);
-	BufferSp encode_nonce(char* nonce, uint16_t len);
-	BufferSp encode_lifetime(int32_t lifetime);
-	BufferSp encode_channelNumber(uint16_t channelNum);
-	BufferSp encode_peer_address_ipv4(uint32_t address, uint16_t port);
-	BufferSp encode_hmac(Buffer *pstream, char* pwd);
-	BufferSp encode_fingerprint(Buffer *pstream);
-	BufferSp encode_mapped_address_ipv4(StunPacket* pkt);
-	int32_t encode_request(StunMessageType type, Buffer* stream, SessionInfo, SessionInfo);
+	int32_t encode_header(StunPacket* pkt, RWBuffer* stream, int32_t len);
+	RWBufferSp encode_username(char* usernamer);
+	RWBufferSp encode_password(char* password);
+	RWBufferSp encode_transport(uint8_t protocol);
+	RWBufferSp encode_data(char* data);
+	RWBufferSp encode_realm(char* realm);
+	RWBufferSp encode_nonce(char* nonce, uint16_t len);
+	RWBufferSp encode_lifetime(int32_t lifetime);
+	RWBufferSp encode_channelNumber(uint16_t channelNum);
+	RWBufferSp encode_peer_address_ipv4(uint32_t address, uint16_t port);
+	RWBufferSp encode_hmac(RWBuffer *pstream, char* pwd);
+	RWBufferSp encode_fingerprint(RWBuffer *pstream);
+	RWBufferSp encode_mapped_address_ipv4(StunPacket* pkt);
+	int32_t encode_request(StunMessageType type, RWBuffer* stream, SessionInfo, SessionInfo);
 };
 
 typedef std::shared_ptr<StunLib> StunLibSp; 

@@ -1,6 +1,7 @@
 #include <iostream>
 #include "RtcContext.h"
 #include "StunPacket.h"
+#include "rtp/RtpPacket.h"
 #include "Log.h"
 
 namespace frtc {
@@ -22,19 +23,19 @@ bool isDtls(const char* data, int32_t size) {
 }
 
 bool isRtp(const char* data, int32_t size) {
-    //RtpHeader *header = (RtpHeader *)buf;
-    //return ((header->pt < 64) || (header->pt >= 96));
-    return true;
+    RtpHeader* header = (RtpHeader*)data;
+    return ((header->pt < 64) || (header->pt >= 96));
 }
 
 bool isRtcp(const char* data, int32_t size) {
-    //RtpHeader *header = (RtpHeader *)buf;
-    //return ((header->pt >= 64) && (header->pt < 96));
-    return true;
+    RtpHeader* header = (RtpHeader*)data;
+    return ((header->pt >= 64) && (header->pt < 96));
 }
     
 RtcContext::RtcContext() {
     _dtlsTransport = std::make_shared<DtlsTransport>(this);
+    _transport = std::make_shared<RtcTransport>();
+    _ticker = std::make_shared<Ticker>();
     std::cout << "start thread\n";
     _work = std::thread(&RtcContext::loop, this);
 }
@@ -67,13 +68,16 @@ void RtcContext::setRemoteSdp(const std::string& remoteSdp){
         remoteFingerprint.algorithm = DtlsTransport::FingerprintAlgorithm::SHA256;
         remoteFingerprint.value = _session->getRemoteFingerprint(); 
         _dtlsTransport->SetRemoteFingerprint(remoteFingerprint); 
+        // transport load sdp
+        _transport->loadSdp(_session->getRtmoteSdp());
     }
 }
     
 void RtcContext::startConnectPeer() {
-    Candidate remoteCandidate = _session->getCandidate(); 
-    if (!_client) {
-        Candidate candidate = _session->getCandidate();
+    std::cout << "now get remote candidate message" << std::endl;
+    CandidatePtr remoteCandidate = _session->getCandidate(); 
+    if (remoteCandidate && !_client) {
+        //Candidate candidate = _session->getCandidate();
         ClientType clientType = ClientType::udp;
         //if (candidate.type == "tcp") {
         //    clientType = ClientType::tcp;
@@ -82,7 +86,9 @@ void RtcContext::startConnectPeer() {
         _client->setRecvCallback([this](char* data, uint32_t size) {
             dispatchPeerData(data, size);
         });
-        _client->connect(remoteCandidate.ip, remoteCandidate.port);
+        
+        std::cout << "remoteCandidate.ip remoteCandidate.port" << remoteCandidate->ip << " " << remoteCandidate->port << std::endl;
+        _client->connect(remoteCandidate->ip, remoteCandidate->port);
     }
     sendBindRequest();
 }
@@ -93,13 +99,13 @@ void RtcContext::send(const char* data, int32_t size) {
     
 void RtcContext::sendBindRequest(void) {
     StunLibSp stun = std::make_shared<StunLib>();
-    BufferSp buffer = std::make_shared<Buffer>();
-    SessionInfo remoteIce = _session->getRemoteIceInfo();
-    SessionInfo localIce = _session->getLocalIceInfo();
+    RWBufferSp buffer = std::make_shared<RWBuffer>();
+    SessionInfoPtr remoteIce = _session->getRemoteIceInfo();
+    SessionInfoPtr localIce = _session->getLocalIceInfo();
 
     char cache[4096];
     buffer->init(cache, 4096);
-    stun->encode_request(StunBindingRequest, &(*buffer), remoteIce, localIce);
+    stun->encode_request(StunBindingRequest, &(*buffer), *remoteIce, *localIce);
     send(buffer->data(), buffer->pos());
 }
 
@@ -153,15 +159,37 @@ void RtcContext::onDtlsData(const char* data, int32_t size) {
     _dtlsTransport->ProcessDtlsData((const uint8_t*)data, size);
 }
 
-void RtcContext::onRtpData(const char* data, int32_t size) {
+void RtcContext::onRtpData(char* data, int32_t size) {
     std::cout << "recieve rtp data" << std::endl;
+    if (_srtpSessionRecv) {
+        if (_srtpSessionRecv->DecryptSrtp((uint8_t*)data, &size)) {
+            std::cout << "decrypt rtp packet successfully" << std::endl;
+            _transport->onRtp(data, size);
+        
+        } else {
+            std::cout << "decrypt rtp packet failed" << std::endl;
+        }
+
+    } else {
+        std::cout << "not create srtp session yet" << std::endl;
+    }
 }
 
-void RtcContext::onRtcpData(const char* data, int32_t size) {
+void RtcContext::onRtcpData(char* data, int32_t size) {
     std::cout << "recieve rtcp data" << std::endl;
+    if (_srtpSessionRecv) {
+        if (_srtpSessionRecv->DecryptSrtcp((uint8_t*)data, &size)) {
+            std::cout << "decrypt rtcp packet successfully" << std::endl;
+        } else {
+            std::cout << "decrypt rtcp packet failed" << std::endl;
+        }
+
+    } else {
+        std::cout << "not create srtp session yet" << std::endl;
+    }
 }
 
-void RtcContext::dispatchPeerData(const char* data, int32_t size) {
+void RtcContext::dispatchPeerData(char* data, int32_t size) {
     std::cout << "dispatch recieve data" << std::endl;
     if (isStun(data, size)) {
         return onIceData(data, size);
@@ -182,9 +210,13 @@ void RtcContext::loop() {
     while (true) {
         if (_client) {
             _client->read();
+        
+            if (_ticker->elapsedTime() > 5000) {
+                sendBindRequest();
+                _ticker->resetTime();
+            }
         }
     }
 }
-
 
 }

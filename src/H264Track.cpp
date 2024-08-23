@@ -1,3 +1,4 @@
+#include <iostream>
 #include "H264Track.h"
 #include "Log.h"
 
@@ -25,20 +26,17 @@ bool H264Track::ready() {
 }
 
 void H264Track::inputFrame(FramePtr frame) {
+    std::cout << "h264 track input frame" << std::endl;
     H264FrameType type = getH264FrameType(frame->data()[frame->prefix()]);
     if (type == H264FrameType::NAL_B_P || type == H264FrameType::NAL_IDR) {
         if (ready()) {
             inputFrame_1(frame);
         } else {
-            LOG_WARN("drop h264 frame before sps and pps come");
+            return;
         }
-    
-    } else {
-
-
-
-
     }
+
+    inputFrame_1(frame);
 }
 
 void H264Track::inputFrame_1(FramePtr frame) {
@@ -46,47 +44,48 @@ void H264Track::inputFrame_1(FramePtr frame) {
     switch (type) {
         case H264FrameType::NAL_SPS: {
             _sps = std::string(frame->data() + frame->prefix(), frame->size() - frame->prefix());
-            Track::inputFrame(frame);
+            //Track::inputFrame(frame);
             break;
         }
         case H264FrameType::NAL_PPS: {
             _pps = std::string(frame->data() + frame->prefix(), frame->size() - frame->prefix());
-            Track::inputFrame(frame);
+            //Track::inputFrame(frame);
             break;
         }
-        default:
+        default: {
             // 判断是否是I帧, 并且如果是,那判断前面是否插入过config帧, 如果插入过就不插入了
             if (frame->keyFrame()) {
                 insertConfigFrame(frame);
             }
             Track::inputFrame(frame);
+        }
     }
 }
 
 void H264Track::insertConfigFrame(FramePtr frame) {
-    if (_sps.empty()) {
-        //FrameImpPtr spsFrame = std::make_shared<FrameImp>();
-        //spsFrame->_isConfig = true;
-        //spsFrame->_pts = frame->pts();
-        //spsFrame->_prefix_size = 4;
-        //spsFrame->_buffer->append(0x00); 
-        //spsFrame->_buffer->append(0x00); 
-        //spsFrame->_buffer->append(0x00); 
-        //spsFrame->_buffer->append(0x01); 
-        //spsFrame->_buffer->append(_sps.c_str(), _sps.size());
-        //Track::inputFrame(spsFrame);
+    if (!_sps.empty()) {
+        FrameImpPtr spsFrame = std::make_shared<FrameImp>();
+        spsFrame->_isConfig = true;
+        spsFrame->_pts = frame->pts();
+        spsFrame->_prefix_size = 4;
+        spsFrame->_buffer->append(0x00); 
+        spsFrame->_buffer->append(0x00); 
+        spsFrame->_buffer->append(0x00); 
+        spsFrame->_buffer->append(0x01); 
+        spsFrame->_buffer->append(_sps.c_str(), _sps.size());
+        Track::inputFrame(spsFrame);
     }
-    if (_pps.empty()) {
-        //FrameImpPtr ppsFrame = std::make_shared<FrameImp>();
-        //ppsFrame->_isConfig = true;
-        //ppsFrame->_pts = frame->pts();
-        //ppsFrame->_prefix_size = 4;
-        //ppsFrame->_buffer->append(0x00); 
-        //ppsFrame->_buffer->append(0x00); 
-        //ppsFrame->_buffer->append(0x00); 
-        //ppsFrame->_buffer->append(0x01); 
-        //ppsFrame->_buffer->append(_pps.c_str(), _pps.size());
-        //Track::inputFrame(ppsFrame);
+    if (!_pps.empty()) {
+        FrameImpPtr ppsFrame = std::make_shared<FrameImp>();
+        ppsFrame->_isConfig = true;
+        ppsFrame->_pts = frame->pts();
+        ppsFrame->_prefix_size = 4;
+        ppsFrame->_buffer->append(0x00); 
+        ppsFrame->_buffer->append(0x00); 
+        ppsFrame->_buffer->append(0x00); 
+        ppsFrame->_buffer->append(0x01); 
+        ppsFrame->_buffer->append(_pps.c_str(), _pps.size());
+        Track::inputFrame(ppsFrame);
     }
 }
 

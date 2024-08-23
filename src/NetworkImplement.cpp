@@ -1,8 +1,8 @@
 #include <cstring>
 #include <iostream>
 #include "NetworkInterface.h"
-#include "Function.h"
 #include "nlohmann/json.hpp"
+#include "Utility.h"
 #include "Log.h"
 
 namespace frtc {
@@ -82,12 +82,13 @@ void HttpClient::sendReq(const std::string& body) {
                 break;
             }
         } 
+        std::cout << "get remote sdp" << std::endl;
     
     } else {
         //if (_readCb) {
         //    _readCb(SignalErr::TIMEOUT, res.error());
         //}
-        //std::cout << res.error() << std::endl;
+        std::cout << res.error() << std::endl;
     }
 }
 
