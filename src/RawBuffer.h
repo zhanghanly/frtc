@@ -161,7 +161,7 @@ public:
         return _capacity;
     }
 
-protected:
+//protected:
     BufferRaw(size_t capacity = 0) {
         if (capacity) {
             setCapacity(capacity);

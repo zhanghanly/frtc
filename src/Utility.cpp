@@ -57,7 +57,7 @@ std::vector<std::string> splitStrWithSeparator(const std::string& src, const std
         index = pos + sep.size(); 
         pos = src.find(sep, pos + sep.size()); 
     }
-    if (index + 1 < src.size()) {
+    if (index < src.size()) {
         result.emplace_back(src.c_str() + index);
     }
 

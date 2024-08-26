@@ -105,7 +105,7 @@ std::string Sdp::create(const std::string& fingerprint) {
     videoDesc->payloads[0]->rtcpFbs.push_back("nack");
     videoDesc->payloads[0]->rtcpFbs.push_back("nack pli");
     videoDesc->payloads.push_back(std::make_shared<MediaPayload>());
-    videoDesc->payloads[1]->payloadType = 97; 
+    videoDesc->payloads[1]->payloadType = 98; 
     videoDesc->payloads[1]->clockRate = 90000;
     videoDesc->payloads[1]->encodingName = "h265";
     videoDesc->payloads[1]->formatSpecificParam = "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f";
@@ -127,11 +127,11 @@ std::string Sdp::create(const std::string& fingerprint) {
     audioDesc->mid = "1";
     audioDesc->sessionInfo = videoDesc->sessionInfo;
     audioDesc->payloads.push_back(std::make_shared<MediaPayload>());
-    audioDesc->payloads[0]->payloadType = 99; 
+    audioDesc->payloads[0]->payloadType = 100; 
     audioDesc->payloads[0]->clockRate = 8000;
     audioDesc->payloads[0]->encodingName = "PCMA";
     audioDesc->payloads.push_back(std::make_shared<MediaPayload>());
-    audioDesc->payloads[1]->payloadType = 100; 
+    audioDesc->payloads[1]->payloadType = 101; 
     audioDesc->payloads[1]->clockRate = 8000;
     audioDesc->payloads[1]->encodingName = "PCMU";
     medias.push_back(audioDesc);
@@ -332,7 +332,13 @@ void Sdp::parse(const std::string& sdp) {
 
             } else if (words[1].find("ssrc:") == 0) {
 
-            } else if (words[1].find("ssrc-group:") == 0) {
+            } else if (words[1].find("ssrc-group:FID") == 0) {
+                std::vector<std::string> valuse = splitStrWithSeparator(words[1], " ");
+                if (valuse.size() >= 3) {
+                    videoDesc->support_rtx = true;
+                    videoDesc->ssrc->ssrc = std::atoi(valuse[1].c_str()); 
+                    videoDesc->ssrc->rtx_ssrc = std::atoi(valuse[2].c_str()); 
+                }
 
             } else if (words[1].find("candidate:") == 0) {
                 std::vector<std::string> valuse = splitStrWithSeparator(words[1], " ");
@@ -379,7 +385,7 @@ void Sdp::parse(const std::string& sdp) {
                     for (auto& item : audioDesc->payloads) {
                         if (item->payloadType == payloadType) {
                             std::vector<std::string> params = splitStrWithSeparator(values[1], "/");
-                            if (params.size() == 2) {
+                            if (params.size() == 3) {
                                 item->encodingName = params[0];
                                 item->clockRate = std::atoi(params[1].c_str());
                             }
@@ -387,7 +393,13 @@ void Sdp::parse(const std::string& sdp) {
                     }
                 }
 
-            }            
+            } else if (words[1].find("ssrc:") == 0) {
+                std::vector<std::string> valuse = splitStrWithSeparator(words[1], ":");
+                if (valuse.size() >= 2) {
+                    audioDesc->ssrc->ssrc = std::atoi(valuse[1].c_str()); 
+                }
+            }   
+
         }
     }
     medias.push_back(audioDesc);
@@ -396,7 +408,7 @@ void Sdp::parse(const std::string& sdp) {
 std::string Sdp::mediaTypeLst(const MediaDescPtr media) {
     std::stringstream ss;
     for (auto& item : media->payloads) {
-        ss << " " << item->payloadType;
+        ss << " " << item->payloadType << " " << item->payloadType + 1;
     }
 
     return ss.str();
@@ -410,6 +422,9 @@ std::string Sdp::payloadInfoLst(const MediaDescPtr media) {
             for (auto& iter : item->rtcpFbs) {
                ss << "a=rtcp-fb:" << item->payloadType << " " << iter << "\r\n"; 
             }   
+        
+            ss << "a=rtpmap:" << item->payloadType + 1 << " " << "rtx/90000" << "\r\n";
+            ss << "a=fmtp:" << item->payloadType + 1 << " " << "apt=" << item->payloadType << "\r\n";
         }
     }
 

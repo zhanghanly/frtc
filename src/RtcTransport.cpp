@@ -2,12 +2,20 @@
 #include <arpa/inet.h>
 #include "RtcTransport.h"
 #include "MediaTrack.h"
+#include "RtcContext.h"
 
 namespace frtc {
     
-RtcTransport::RtcTransport() {
+RtcTransport::RtcTransport(RtcContext* context) {
+    _context = context;
+    _alive_ticker = std::make_shared<Ticker>();
+    _rr_ticker = std::make_shared<Ticker>();
     _source = std::make_shared<RtcMediaSource>(this);
     _demuxer = std::make_shared<RtcDemuxer>(this);
+    // twcc callback
+    _twcc_ctx.setOnSendTwccCB([this](uint32_t ssrc, std::string fci) { 
+        onSendTwcc(ssrc, fci);
+    });
 }
 
 void RtcTransport::loadSdp(SdpSp sdp) {
@@ -31,7 +39,8 @@ void RtcTransport::loadSdp(SdpSp sdp) {
         // recv ssrc --> MediaTrack
         _ssrc_to_track[track->answer_rtp_ssrc] = track;
         _ssrc_to_track[track->answer_rtx_ssrc] = track;
-        
+
+        std::cout << "track ssrc=" << track->answer_rtp_ssrc << " rtx ssrc=" << track->answer_rtx_ssrc << std::endl;    
         std::cout << "create track->rtp_payload->payloadType " << (track->rtp_payload)->payloadType << std::endl;
         // rtp pt --> MediaTrack
         _pt_to_track.emplace(
@@ -39,6 +48,7 @@ void RtcTransport::loadSdp(SdpSp sdp) {
         if (media->support_rtx) {
             // rtx pt --> MediaTrack
             _pt_to_track.emplace((track->rtx_payload)->payloadType, std::unique_ptr<WrappedMediaTrack>(new WrappedRtxTrack(track)));
+            std::cout << "create rtx track, ssrc=" << track->answer_rtx_ssrc << " pt=" << track->rtx_payload->payloadType << std::endl;
         }
         // 记录rtp ext类型与id的关系，方便接收或发送rtp时修改rtp ext id
         track->rtp_ext_ctx = std::make_shared<RtpExtContext>();
@@ -55,8 +65,9 @@ void RtcTransport::loadSdp(SdpSp sdp) {
     _demuxer->loadSdp(sdp);
 } 
 
+
 void RtcTransport::onRtp(const char* data, uint32_t size) {
-    _alive_ticker.resetTime();
+    _alive_ticker->resetTime();
     RtpHeader* rtp = (RtpHeader*)data;
     // 根据接收到的rtp的pt信息，找到该流的信息
     auto it = _pt_to_track.find(rtp->pt);
@@ -75,7 +86,7 @@ void RtcTransport::onRtcp(const char* data, uint32_t size) {
     for (auto rtcp : rtcps) {
         switch ((RtcpType)rtcp->pt) {
         case RtcpType::RTCP_SR: {
-            _alive_ticker.resetTime();
+            _alive_ticker->resetTime();
             // 对方汇报rtp发送情况
             RtcpSR* sr = (RtcpSR*)rtcp;
             auto it = _ssrc_to_track.find(sr->ssrc);
@@ -83,20 +94,22 @@ void RtcTransport::onRtcp(const char* data, uint32_t size) {
                 auto& track = it->second;
                 auto rtp_chn = track->getRtpChannel(sr->ssrc);
                 if (!rtp_chn) {
-                    //WarnL << "未识别的sr rtcp包:" << rtcp->dumpString();
+                    std::cout << "unknown sr rtcp packet:" << rtcp->dumpString() << std::endl;
                 } else {
                     // 设置rtp时间戳与ntp时间戳的对应关系
                     rtp_chn->setNtpStamp(sr->rtpts, sr->getNtpUnixStampMS());
-                    //auto rr = rtp_chn->createRtcpRR(sr, track->answer_ssrc_rtp);
-                    //sendRtcpPacket(rr->data(), rr->size(), true);
+                    auto rr = rtp_chn->createRtcpRR(sr, track->answer_rtp_ssrc);
+                    if (_context) {
+                        _context->sendRtcpPacket(rr->data(), rr->size());
+                    }
                 }
             } else {
-                //WarnL << "未识别的sr rtcp包:" << rtcp->dumpString();
+                std::cout << "unknown  ssrc  sr rtcp packet:" << rtcp->dumpString() << std::endl;
             }
             break;
         }
         case RtcpType::RTCP_RR: {
-            _alive_ticker.resetTime();
+            _alive_ticker->resetTime();
             // 对方汇报rtp接收情况
             RtcpRR* rr = (RtcpRR*)rtcp;
             for (auto item : rr->getItemList()) {
@@ -190,6 +203,8 @@ void RtcTransport::createRtpChannel(const std::string& rid, uint32_t ssrc, Media
             if (strong_self) {
                 strong_self->onSendNack(track, nack, ssrc);
             }
+        
+            std::cout << "send rtcp nack packet" << std::endl;
         });
     std::cout << "create rtp receiver of ssrc:" << ssrc << ", rid:" << rid << ", codec:" << std::endl;
 }
@@ -199,20 +214,43 @@ void RtcTransport::onSortedRtp(MediaTrack& track, const std::string& rid, RtpPac
     if (_demuxer) {
         _demuxer->inputRtp(rtp);
     }
+    if (_rr_ticker->elapsedTime() >= 5000) {
+        if (track.track_type == MediaType::video) {
+            auto& ref = track.rtp_channel[rid];
+            if (!ref) {
+                return;
+            }
+
+            auto rr = ref->createRtcpRR(track.answer_rtp_ssrc);
+            if (_context) {
+                _context->sendRtcpPacket(rr->data(), rr->size());
+                std::cout << "send rtcp rr packet" << std::endl;
+            }
+            _rr_ticker->resetTime();
+        }
+    }
 }
     
 void RtcTransport::onSendNack(MediaTrack& track, const FCI_NACK& nack, uint32_t ssrc) {
     auto rtcp = RtcpFB::create(RTPFBType::RTCP_RTPFB_NACK, &nack, FCI_NACK::kSize);
     rtcp->ssrc = htonl(track.answer_rtp_ssrc);
     rtcp->ssrc_media = htonl(ssrc);
-    //sendRtcpPacket((char*)rtcp.get(), rtcp->getSize(), true);
+    if (_context) {
+        _context->sendRtcpPacket((char*)rtcp.get(), rtcp->getSize());
+    }
+
+    std::cout << "send rtcp nack request" << std::endl;
 }
     
 void RtcTransport::onSendTwcc(uint32_t ssrc, const std::string& twcc_fci) {
     auto rtcp = RtcpFB::create(RTPFBType::RTCP_RTPFB_TWCC, twcc_fci.data(), twcc_fci.size());
     rtcp->ssrc = htonl(0);
     rtcp->ssrc_media = htonl(ssrc);
-    //sendRtcpPacket((char*)rtcp.get(), rtcp->getSize(), true);
+    if (_context) {
+        _context->sendRtcpPacket((char*)rtcp.get(), rtcp->getSize());
+    }
+    
+    std::cout << "send rtcp twcc request" << std::endl;
 }
     
 void RtcTransport::addTrack(TrackPtr track) {

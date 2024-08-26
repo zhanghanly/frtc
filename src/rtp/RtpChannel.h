@@ -16,7 +16,8 @@ public:
         setOnSorted(std::move(cb));
         //设置jitter buffer参数
         //GET_CONFIG(uint32_t, nack_maxms, Rtc::kNackMaxMS);
-        //RtpTrackImp::setParams(1024, nack_maxms, 512);
+        uint32_t nack_maxms = 5000;
+        RtpTrackImp::setParams(1024, nack_maxms, 512);
         _nack_ctx.setOnNack([this](const FCI_NACK& nack) { onNack(nack); });
     }
 
@@ -36,6 +37,10 @@ public:
 
     Buffer::Ptr createRtcpRR(RtcpHeader* sr, uint32_t ssrc) {
         _rtcp_context.onRtcp(sr);
+        return _rtcp_context.createRtcpRR(ssrc, getSSRC());
+    }
+    
+    Buffer::Ptr createRtcpRR(uint32_t ssrc) {
         return _rtcp_context.createRtcpRR(ssrc, getSSRC());
     }
 

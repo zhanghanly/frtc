@@ -1,7 +1,9 @@
 #include <iostream>
+#include <srtp2/srtp.h>
 #include "RtcContext.h"
 #include "StunPacket.h"
 #include "rtp/RtpPacket.h"
+#include "RawBuffer.h"
 #include "Log.h"
 
 namespace frtc {
@@ -34,7 +36,7 @@ bool isRtcp(const char* data, int32_t size) {
     
 RtcContext::RtcContext() {
     _dtlsTransport = std::make_shared<DtlsTransport>(this);
-    _transport = std::make_shared<RtcTransport>();
+    _transport = std::make_shared<RtcTransport>(this);
     _ticker = std::make_shared<Ticker>();
     std::cout << "start thread\n";
     _work = std::thread(&RtcContext::loop, this);
@@ -44,7 +46,7 @@ RtcContext::~RtcContext() {
     if (_work.joinable()) {
         _work.join();
     }
- }
+}
 
 std::string RtcContext::createLocalSdp() {
     if (!_session) {
@@ -202,6 +204,17 @@ void RtcContext::dispatchPeerData(char* data, int32_t size) {
     
     } else if (isRtcp(data, size)) {
         return onRtcpData(data, size);
+    }
+}
+    
+void RtcContext::sendRtcpPacket(const char* data, int len) {
+    auto pkt = std::make_shared<BufferRaw>(); 
+    // 预留rtx加入的两个字节
+    pkt->setCapacity((size_t)len + SRTP_MAX_TRAILER_LEN + 2);
+    memcpy(pkt->data(), data, len);
+    if (_srtpSessionSend->EncryptRtcp(reinterpret_cast<uint8_t*>(pkt->data()), &len)) {
+        pkt->setSize(len);
+        send(pkt->data(), pkt->size());
     }
 }
 

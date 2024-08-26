@@ -25,6 +25,8 @@ void PeerConnection::connnectSignalServer(const std::string& url) {
     std::string localSdp = _context->createLocalSdp();
     _signalClient->connectPeer(url);
     _signalClient->sendReq(localSdp);
+
+    std::cout << "localSdp=" << localSdp << std::endl;
 }
     
 void PeerConnection::startEstablishConnection() {

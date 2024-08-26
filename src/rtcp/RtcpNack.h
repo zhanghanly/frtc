@@ -14,13 +14,13 @@ namespace frtc {
 class NackList {
 public:
     void pushBack(RtpPacket::Ptr rtp);
-    void forEach(const FCI_NACK &nack, const std::function<void(const RtpPacket::Ptr &rtp)> &cb);
+    void forEach(const FCI_NACK& nack, const std::function<void(const RtpPacket::Ptr& rtp)>& cb);
 
 private:
     void popFront();
     uint32_t getCacheMS();
     int64_t getRtpStamp(uint16_t seq);
-    RtpPacket::Ptr *getRtp(uint16_t seq);
+    RtpPacket::Ptr* getRtp(uint16_t seq);
 
 private:
     uint32_t _cache_ms_check = 0;
@@ -31,7 +31,7 @@ private:
 class NackContext {
 public:
     using Ptr = std::shared_ptr<NackContext>;
-    using onNack = std::function<void(const FCI_NACK &nack)>;
+    using onNack = std::function<void(const FCI_NACK& nack)>;
 
     NackContext();
 
@@ -41,8 +41,8 @@ public:
 
 private:
     void eraseFrontSeq();
-    void doNack(const FCI_NACK &nack, bool record_nack);
-    void recordNack(const FCI_NACK &nack);
+    void doNack(const FCI_NACK& nack, bool record_nack);
+    void recordNack(const FCI_NACK& nack);
     void clearNackStatus(uint16_t seq);
     void makeNack(uint16_t max, bool flush = false);
 

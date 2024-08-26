@@ -12,9 +12,11 @@
 
 namespace frtc {
 
+class RtcContext;
+
 class RtcTransport : public std::enable_shared_from_this<RtcTransport> {
 public:
-    RtcTransport(); 
+    RtcTransport(RtcContext*); 
     
     void loadSdp(SdpSp);
 
@@ -41,9 +43,11 @@ private:
     //用掉的总流量
     uint64_t _bytes_usage = 0;
     //刷新计时器
-    Ticker _alive_ticker;
+    TickerSp _alive_ticker;
     //pli rtcp计时器
-    Ticker _pli_ticker;
+    //Ticker _pli_ticker;
+    //rr rtcp计时器
+    TickerSp _rr_ticker;
     //twcc rtcp发送上下文对象
     TwccContext _twcc_ctx;
     //根据发送rtp的track类型获取相关信息
@@ -56,6 +60,7 @@ private:
     MediaSourceSp _source;
     // rtc rtp demuxer
     RtcDemuxerSp _demuxer;
+    RtcContext* _context;
 };
 
 typedef std::shared_ptr<RtcTransport> RtcTransportSp;

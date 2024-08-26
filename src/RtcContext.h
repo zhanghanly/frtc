@@ -22,7 +22,7 @@ public:
 
     void setRemoteSdp(const std::string&);
 
-    void sendRtcpPacket();
+    void sendRtcpPacket(const char*, int);
 
     void startConnectPeer();
 
