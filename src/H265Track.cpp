@@ -1,5 +1,6 @@
 #include <iostream>
 #include "H265Track.h"
+#include "H265.h"
 
 namespace frtc {
 
@@ -52,12 +53,20 @@ void H265Track::inputFrame(FramePtr frame) {
     if (!frame->configFrame() && type != H265FrameType::NAL_SEI_PREFIX) {
         if (ready()) {
             inputFrame_1(frame);
-        } else {
-            return;
         }
-    }
+    } else {
+        splitH264(frame->data(), frame->size(), frame->prefix(), [&](const char* ptr, size_t len, size_t prefix) {
+            auto subFrame = FrameImp::create<H265Frame>();
+            subFrame->_prefix_size = prefix;
+            subFrame->_type = MediaType::video;
+            subFrame->_codec_id = CodecId::h265;
+            subFrame->_dts = frame->dts(); 
+            subFrame->_pts = frame->pts();
+            subFrame->_buffer->append(ptr, len);
 
-    inputFrame_1(frame);
+            inputFrame_1(subFrame);
+        });
+    }
 }
 
 int32_t H265Track::height() {
@@ -74,6 +83,7 @@ int32_t H265Track::fps() {
 
 void H265Track::inputFrame_1(FramePtr frame) {
     if (frame->keyFrame()) {
+        std::cout << "recieve key frame" << std::endl;
         insertConfigFrame(frame);
         return Track::inputFrame(frame);
     }
@@ -81,14 +91,17 @@ void H265Track::inputFrame_1(FramePtr frame) {
     switch (getH265FrameType(frame->data()[frame->prefix()])) {
         case H265FrameType::NAL_VPS: {
             _vps = std::string(frame->data() + frame->prefix(), frame->size() - frame->prefix());
+            std::cout << "recieve vps frame, size=" << frame->size() << std::endl;
             break;
         }
         case H265FrameType::NAL_SPS: {
             _sps = std::string(frame->data() + frame->prefix(), frame->size() - frame->prefix());
+            std::cout << "recieve sps frame, size=" << frame->size() << std::endl;
             break;
         }
         case H265FrameType::NAL_PPS: {
             _pps = std::string(frame->data() + frame->prefix(), frame->size() - frame->prefix());
+            std::cout << "recieve pps frame, size=" << frame->size() << std::endl;
             break;
         }
         default: {
@@ -101,7 +114,9 @@ void H265Track::inputFrame_1(FramePtr frame) {
 void H265Track::insertConfigFrame(FramePtr frame) {
     if (!_vps.empty()) {
         FrameImpPtr vpsFrame = std::make_shared<FrameImp>();
+        vpsFrame->_type = MediaType::video; 
         vpsFrame->_isConfig = true;
+        vpsFrame->_isKey = false; 
         vpsFrame->_pts = frame->pts();
         vpsFrame->_prefix_size = 4;
         vpsFrame->_buffer->append(0x00); 
@@ -109,11 +124,15 @@ void H265Track::insertConfigFrame(FramePtr frame) {
         vpsFrame->_buffer->append(0x00); 
         vpsFrame->_buffer->append(0x01); 
         vpsFrame->_buffer->append(_vps.c_str(), _vps.size());
+        
+        std::cout << "out put vps frame" << std::endl;
         Track::inputFrame(vpsFrame);
     }
     if (!_sps.empty()) {
         FrameImpPtr spsFrame = std::make_shared<FrameImp>();
+        spsFrame->_type = MediaType::video; 
         spsFrame->_isConfig = true;
+        spsFrame->_isKey = false; 
         spsFrame->_pts = frame->pts();
         spsFrame->_prefix_size = 4;
         spsFrame->_buffer->append(0x00); 
@@ -121,11 +140,15 @@ void H265Track::insertConfigFrame(FramePtr frame) {
         spsFrame->_buffer->append(0x00); 
         spsFrame->_buffer->append(0x01); 
         spsFrame->_buffer->append(_sps.c_str(), _sps.size());
+        
+        std::cout << "out put sps frame" << std::endl;
         Track::inputFrame(spsFrame);
     }
     if (!_pps.empty()) {
         FrameImpPtr ppsFrame = std::make_shared<FrameImp>();
+        ppsFrame->_type = MediaType::video; 
         ppsFrame->_isConfig = true;
+        ppsFrame->_isKey = false; 
         ppsFrame->_pts = frame->pts();
         ppsFrame->_prefix_size = 4;
         ppsFrame->_buffer->append(0x00); 
@@ -133,6 +156,8 @@ void H265Track::insertConfigFrame(FramePtr frame) {
         ppsFrame->_buffer->append(0x00); 
         ppsFrame->_buffer->append(0x01); 
         ppsFrame->_buffer->append(_pps.c_str(), _pps.size());
+        
+        std::cout << "out put pps frame" << std::endl;
         Track::inputFrame(ppsFrame);
     }
 }

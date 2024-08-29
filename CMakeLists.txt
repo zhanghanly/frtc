@@ -8,6 +8,8 @@ set(CMAKE_BUILD_TYPE "DEBUG")
 
 add_definitions(-DCPPHTTPLIB_OPENSSL_SUPPORT)
 
+add_compile_options(-fPIC)
+
 aux_source_directory(${PROJECT_SOURCE_DIR}/src source)
 
 aux_source_directory(${PROJECT_SOURCE_DIR}/src/rtp rtp)
@@ -22,6 +24,6 @@ link_directories(${PROJECT_SOURCE_DIR}/thirdParty/lib)
 
 add_library(rtc ${source} ${rtp} ${rtcp})
 
-target_link_libraries(rtc
-                      ssl
-                      crypto)
+#target_link_libraries(rtc
+#                      ssl
+#                      crypto)

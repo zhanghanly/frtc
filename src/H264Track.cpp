@@ -31,12 +31,10 @@ void H264Track::inputFrame(FramePtr frame) {
     if (type == H264FrameType::NAL_B_P || type == H264FrameType::NAL_IDR) {
         if (ready()) {
             inputFrame_1(frame);
-        } else {
-            return;
-        }
+        } 
+    } else {
+        inputFrame_1(frame);
     }
-
-    inputFrame_1(frame);
 }
 
 void H264Track::inputFrame_1(FramePtr frame) {
@@ -65,7 +63,9 @@ void H264Track::inputFrame_1(FramePtr frame) {
 void H264Track::insertConfigFrame(FramePtr frame) {
     if (!_sps.empty()) {
         FrameImpPtr spsFrame = std::make_shared<FrameImp>();
+        spsFrame->_type = MediaType::video;
         spsFrame->_isConfig = true;
+        spsFrame->_isKey = false;
         spsFrame->_pts = frame->pts();
         spsFrame->_prefix_size = 4;
         spsFrame->_buffer->append(0x00); 
@@ -73,11 +73,14 @@ void H264Track::insertConfigFrame(FramePtr frame) {
         spsFrame->_buffer->append(0x00); 
         spsFrame->_buffer->append(0x01); 
         spsFrame->_buffer->append(_sps.c_str(), _sps.size());
+        std::cout << "out put sps frame" << std::endl;
         Track::inputFrame(spsFrame);
     }
     if (!_pps.empty()) {
         FrameImpPtr ppsFrame = std::make_shared<FrameImp>();
+        ppsFrame->_type = MediaType::video;
         ppsFrame->_isConfig = true;
+        ppsFrame->_isKey = false;
         ppsFrame->_pts = frame->pts();
         ppsFrame->_prefix_size = 4;
         ppsFrame->_buffer->append(0x00); 
@@ -85,6 +88,7 @@ void H264Track::insertConfigFrame(FramePtr frame) {
         ppsFrame->_buffer->append(0x00); 
         ppsFrame->_buffer->append(0x01); 
         ppsFrame->_buffer->append(_pps.c_str(), _pps.size());
+        std::cout << "out put pps frame" << std::endl;
         Track::inputFrame(ppsFrame);
     }
 }

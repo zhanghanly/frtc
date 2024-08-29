@@ -17,7 +17,6 @@ std::string RtcSession::createLocalSdp() {
 }
 
 void RtcSession::setRemoteSdp(const std::string& sdp) {
-    std::cout << "remote sdp=" << sdp << std::endl;
     _remoteSdp->parse(sdp);
 }
     

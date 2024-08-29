@@ -3,54 +3,58 @@
 
 #include <stdint.h>
 
-enum FrtcAudioCodec {
+typedef enum {
     FRTC_UNKNOWN_A,
     FRTC_PCMA,
     FRTC_PCMU,
     FRTC_AAC,
     FRTC_OPUS
-};
+} FrtcAudioCodec;
 
-enum FrtcVideoCodec {
+typedef enum {
     FRTC_UNKNOWN_V,
     FRTC_H264,
     FRTC_H265,
     FRTC_VP8,
     FRTC_VP9
-};
+} FrtcVideoCodec;
+
+typedef struct {
+    int32_t frameType;
+    int64_t pts;
+    int64_t dts;
+    int32_t size;
+    uint8_t* data;
+} FrtcFrame;
 
 typedef struct {
     FrtcAudioCodec codec;
     int32_t samplerate;
     int32_t channels;
     int32_t samplerateDepth;
-    int64_t pts;
-    int32_t size;
-    uint8_t* data;
-} FrtcAudioFrame;
+} FrtcAudioParam;
 
 typedef struct {
     FrtcVideoCodec codec;
-    int32_t frameType;
-    int64_t pts;
-    int64_t dts;
-    int32_t size;
-    uint8_t* data;
-} FrtcVideoFrame;
+    char extra[1024];
+    int32_t extraLen;
+} FrtcVideoParam;
 
+typedef void (*OnRecieveVideoParam)(void*, FrtcVideoParam*);
+
+typedef void (*OnRecieveAudioParam)(void*, FrtcAudioParam*);
+
+typedef void (*OnRecieveVideoFrame)(void*, FrtcFrame*);
+
+typedef void (*OnRecieveAudioFrame)(void*, FrtcFrame*);
 
 typedef struct {
-
-
-
-
-
-
-    /* data */
-} FrtcAudioConfig;
-
-typedef void (*OnRecieveVideoFrame)(void*, FrtcVideoFrame);
-typedef void (*OnRecieveAudioFrame)(void*, FrtcAudioFrame);
+    void* user_data;
+    OnRecieveVideoParam video_param_cb;
+    OnRecieveAudioParam audio_param_cb;
+    OnRecieveVideoFrame video_frame_cb;
+    OnRecieveAudioFrame audio_frame_cb;
+} FrtcStreamConfig;
 
 
 #ifdef __cplusplus
@@ -64,16 +68,11 @@ extern "C" {
 void* frtcCreateCtx(void);
 
 /**
- * @brief: 设置接收音频帧的回调函数 
- * @param callback: 接收音频帧的回调函数 
+ * @brief: 设置接收流回调 
+ * @param ctx: frtc的上下文句柄 
+ * @param config: 接收流的配置项 
 */
-void frtcSetAudioCallback(OnRecieveAudioFrame callback);
-
-/**
- * @brief: 设置接收视频帧的回调函数 
- * @param callback: 接收视频帧的回调函数 
-*/
-void frtcSetVideoCallback(OnRecieveVideoFrame callback);
+void frtcSetStreamConfig(void* ctx, FrtcStreamConfig* config);
 
 /**
  * @brief: 连接信令服务器 

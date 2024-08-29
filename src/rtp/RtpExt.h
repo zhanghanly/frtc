@@ -42,13 +42,13 @@ class RtcMedia;
 class RtpExt {
 public:
     template<typename Type>
-    friend void appendExt(std::map<uint8_t, RtpExt> &ret, uint8_t *ptr, const uint8_t *end);
+    friend void appendExt(std::map<uint8_t, RtpExt>& ret, uint8_t* ptr, const uint8_t* end);
     friend class RtpExtContext;
 
-    static std::map<uint8_t/*id*/, RtpExt/*data*/> getExtValue(const RtpHeader *header);
-    static RtpExtType getExtType(const std::string &url);
+    static std::map<uint8_t/*id*/, RtpExt/*data*/> getExtValue(const RtpHeader* header);
+    static RtpExtType getExtType(const std::string& url);
     static const std::string& getExtUrl(RtpExtType type);
-    static const char *getExtName(RtpExtType type);
+    static const char* getExtName(RtpExtType type);
 
     void setType(RtpExtType type);
     RtpExtType getType() const;

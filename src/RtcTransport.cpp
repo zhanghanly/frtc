@@ -78,7 +78,7 @@ void RtcTransport::onRtp(const char* data, uint32_t size) {
         
     uint64_t stamp_ms = getCurrentMillisecond();
     it->second->inputRtp(data, size, stamp_ms, rtp);
-    std::cout << "revieve rtp pt: " << (int)rtp->pt << std::endl;
+    //std::cout << "revieve rtp pt: " << (int)rtp->pt << std::endl;
 }
 
 void RtcTransport::onRtcp(const char* data, uint32_t size) {
@@ -276,6 +276,15 @@ void RtcTransport::onFrame(FramePtr frame) {
             std::cout << __FUNCTION__ << " on audio frame" << std::endl;
         }
 
+        if (_frame_cb) {
+            _frame_cb(frame);
+        }
+    }
+}
+    
+void RtcTransport::setFrameCallback(std::function<void(FramePtr)> cb) {
+    if (cb) {
+        _frame_cb = cb;
     }
 }
 

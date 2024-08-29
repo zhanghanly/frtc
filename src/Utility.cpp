@@ -1,4 +1,5 @@
 #include <sys/time.h>
+#include <cstring>
 #include "Utility.h"
 
 namespace frtc {
@@ -69,6 +70,17 @@ uint64_t getCurrentMillisecond() {
     gettimeofday(&tv, nullptr);
 
     return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
+
+
+const char* memfind(const char* buf, ssize_t len, const char* subbuf, ssize_t sublen) {
+    for (auto i = 0; i < len - sublen; ++i) {
+        if (memcmp(buf + i, subbuf, sublen) == 0) {
+            return buf + i;
+        }
+    }
+    
+    return nullptr;
 }
 
 }

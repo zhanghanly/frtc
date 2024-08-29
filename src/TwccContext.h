@@ -28,7 +28,8 @@ private:
 private:
     uint64_t _min_stamp = 0;
     uint64_t _max_stamp;
-    std::map<uint32_t /*twcc_ext_seq*/, uint64_t/*recv time in ms*/> _rtp_recv_status;
+     /*twcc_ext_seq -> recv time in ms*/
+    std::map<uint32_t, uint64_t> _rtp_recv_status;
     uint8_t _twcc_pkt_count = 0;
     onSendTwccCB _cb;
 };

@@ -40,6 +40,8 @@ std::vector<std::string> splitStrWithSeparator(const std::string& src, const std
 */
 uint64_t getCurrentMillisecond();
 
+const char* memfind(const char* buf, ssize_t len, const char* subbuf, ssize_t sublen);
+
 }
 
 #endif

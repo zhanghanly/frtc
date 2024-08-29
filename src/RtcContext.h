@@ -49,6 +49,10 @@ public:
 
     void loop(void);
 
+    void stop(void);
+
+    void setFrameCallback(std::function<void(FramePtr)>);
+
 private:
     void send(const char*, int32_t);
 
@@ -73,6 +77,7 @@ private:
     RtcTransportSp _transport; 
     TickerSp _ticker;
     std::thread _work;
+    bool _runFlag;
 };
 
 typedef std::shared_ptr<RtcContext> RtcContextSp;

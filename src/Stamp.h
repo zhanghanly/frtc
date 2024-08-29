@@ -11,10 +11,10 @@ namespace frtc {
 //pts排序后就是dts
 class DtsGenerator{
 public:
-    bool getDts(uint64_t pts, uint64_t &dts);
+    bool getDts(uint64_t pts, uint64_t& dts);
 
 private:
-    bool getDts_l(uint64_t pts, uint64_t &dts);
+    bool getDts_l(uint64_t pts, uint64_t& dts);
 
 private:
     uint64_t _dts_pts_offset = 0;

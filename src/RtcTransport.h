@@ -32,6 +32,8 @@ public:
 
     void onFrame(FramePtr);
 
+    void setFrameCallback(std::function<void(FramePtr)>);
+
 private:
     void onSortedRtp(MediaTrack& track, const std::string& rid, RtpPacket::Ptr rtp);
 
@@ -61,6 +63,8 @@ private:
     // rtc rtp demuxer
     RtcDemuxerSp _demuxer;
     RtcContext* _context;
+    // video and audio callback
+    std::function<void(FramePtr)> _frame_cb;    
 };
 
 typedef std::shared_ptr<RtcTransport> RtcTransportSp;

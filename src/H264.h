@@ -32,12 +32,12 @@ public:
     }
 
     bool keyFrame() override {
-        auto nal_ptr = (uint8_t *) this->data() + this->prefix();
+        auto nal_ptr = (uint8_t*) this->data() + this->prefix();
         return H264_TYPE(*nal_ptr) == NAL_IDR && decodeAble();
     }
 
     bool configFrame() override {
-        auto nal_ptr = (uint8_t *) this->data() + this->prefix();
+        auto nal_ptr = (uint8_t*) this->data() + this->prefix();
         switch (H264_TYPE(*nal_ptr)) {
             case NAL_SPS:
             case NAL_PPS: return true;
@@ -46,7 +46,7 @@ public:
     }
 
     bool dropAble() override {
-        auto nal_ptr = (uint8_t *) this->data() + this->prefix();
+        auto nal_ptr = (uint8_t*) this->data() + this->prefix();
         switch (H264_TYPE(*nal_ptr)) {
             case NAL_SEI:
             case NAL_AUD: return true;
@@ -55,7 +55,7 @@ public:
     }
 
     bool decodeAble() override {
-        auto nal_ptr = (uint8_t *) this->data() + this->prefix();
+        auto nal_ptr = (uint8_t*) this->data() + this->prefix();
         auto type = H264_TYPE(*nal_ptr);
         //多slice情况下, first_mb_in_slice 表示其为一帧的开始
         return type >= NAL_B_P && type <= NAL_IDR && (nal_ptr[1] & 0x80);

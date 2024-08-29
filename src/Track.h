@@ -54,6 +54,9 @@ public:
     virtual int32_t fps() = 0;
 };
 
+void splitH264(const char* ptr, size_t len, size_t prefix, 
+               const std::function<void(const char*, size_t, size_t)>& cb);
+
 }
 
 #endif
