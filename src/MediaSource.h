@@ -45,9 +45,9 @@ public:
     
     RtcMediaSource(RtcTransport*);
 
-    virtual void onTrackFrame(FramePtr);
+    virtual void onTrackFrame(FramePtr) override;
 
-    virtual void onTrackReady();
+    virtual void onTrackReady() override;
 
 private:
     RtcTransport* _transport;

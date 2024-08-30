@@ -210,7 +210,7 @@ void RtcTransport::createRtpChannel(const std::string& rid, uint32_t ssrc, Media
 }
 
 void RtcTransport::onSortedRtp(MediaTrack& track, const std::string& rid, RtpPacket::Ptr rtp) {
-    std::cout << "recieve sorted rtp packet, pt=" << (int)rtp->getHeader()->pt << std::endl;
+    //std::cout << "recieve sorted rtp packet, pt=" << (int)rtp->getHeader()->pt << std::endl;
     if (_demuxer) {
         _demuxer->inputRtp(rtp);
     }
@@ -261,7 +261,7 @@ void RtcTransport::addTrack(TrackPtr track) {
 }
     
 void RtcTransport::inputFrame(FramePtr frame) {
-    std::cout << __FUNCTION__ << " input frame" << std::endl;
+    //std::cout << __FUNCTION__ << " input frame" << std::endl;
     if (_source && frame) {
         _source->inputFrame(frame);
     }
@@ -269,12 +269,12 @@ void RtcTransport::inputFrame(FramePtr frame) {
 
 void RtcTransport::onFrame(FramePtr frame) {
     if (frame) {
-        if (frame->mediaType() == MediaType::video) {
-            std::cout << __FUNCTION__ << " on video frame" << std::endl;
+        //if (frame->mediaType() == MediaType::video) {
+        //    std::cout << __FUNCTION__ << " on video frame" << std::endl;
 
-        } else if (frame->mediaType() == MediaType::audio) {
-            std::cout << __FUNCTION__ << " on audio frame" << std::endl;
-        }
+        //} else if (frame->mediaType() == MediaType::audio) {
+        //    std::cout << __FUNCTION__ << " on audio frame" << std::endl;
+        //}
 
         if (_frame_cb) {
             _frame_cb(frame);

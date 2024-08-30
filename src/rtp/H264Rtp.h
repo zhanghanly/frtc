@@ -28,7 +28,7 @@ public:
      * @param rtp rtp包
      * @param key_pos 此参数忽略之
      */
-    bool inputRtp(RtpPacket::Ptr rtp, bool key_pos = true);
+    bool inputRtp(RtpPacket::Ptr rtp, bool key_pos = true) override;
 
 private:
     bool singleFrame(const RtpPacket::Ptr &rtp, const uint8_t *ptr, ssize_t size, uint64_t stamp);

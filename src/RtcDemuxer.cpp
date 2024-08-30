@@ -26,14 +26,14 @@ void RtcDemuxer::inputRtp(RtpPacket::Ptr rtp) {
      switch (rtp->type) {
         case MediaType::video: {
             if (_videoDecoder) {
-                std::cout << "video rtp decoder input video packet" << std::endl;
+                //std::cout << "video rtp decoder input video packet" << std::endl;
                 _videoDecoder->inputRtp(rtp, true);
             }
             break;
         }
         case MediaType::audio: {
             if (_audioDecoder) {
-                std::cout << "audio rtp decoder input audio packet" << std::endl;
+                //std::cout << "audio rtp decoder input audio packet" << std::endl;
                 _audioDecoder->inputRtp(rtp, false);
             }
             break;

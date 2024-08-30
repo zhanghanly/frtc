@@ -25,7 +25,7 @@ public:
      * @param rtp rtp数据包
      * @param key_pos 此参数内部强制转换为false,请忽略之
      */
-    bool inputRtp(RtpPacket::Ptr rtp, bool key_pos = false);
+    bool inputRtp(RtpPacket::Ptr rtp, bool key_pos = false) override;
 
 private:
     void obtainFrame();
