@@ -1,5 +1,6 @@
 #include <iostream>
 #include <srtp2/srtp.h>
+#include <android/log.h>
 #include "RtcContext.h"
 #include "StunPacket.h"
 #include "rtp/RtpPacket.h"
@@ -38,11 +39,12 @@ RtcContext::RtcContext() : _runFlag(true) {
     _dtlsTransport = std::make_shared<DtlsTransport>(this);
     _transport = std::make_shared<RtcTransport>(this);
     _ticker = std::make_shared<Ticker>();
-    std::cout << "start thread\n";
-    _work = std::thread(&RtcContext::loop, this);
 }
 
 RtcContext::~RtcContext() {
+    //if (_client) {
+    //    _client->close();
+    //}
     if (_work.joinable()) {
         _work.join();
     }
@@ -76,7 +78,6 @@ void RtcContext::setRemoteSdp(const std::string& remoteSdp){
 }
     
 void RtcContext::startConnectPeer() {
-    std::cout << "now get remote candidate message" << std::endl;
     CandidatePtr remoteCandidate = _session->getCandidate(); 
     if (remoteCandidate && !_client) {
         //Candidate candidate = _session->getCandidate();
@@ -88,9 +89,12 @@ void RtcContext::startConnectPeer() {
         _client->setRecvCallback([this](char* data, uint32_t size) {
             dispatchPeerData(data, size);
         });
-        
-        std::cout << "remoteCandidate.ip remoteCandidate.port" << remoteCandidate->ip << " " << remoteCandidate->port << std::endl;
         _client->connect(remoteCandidate->ip, remoteCandidate->port);
+        _client->setReadTimeout(200); //0.2s
+        LOGI("remoteCandidate.ip=%s remoteCandidate.port=%d", remoteCandidate->ip.c_str(), remoteCandidate->port);
+    
+        _work = std::thread(&RtcContext::loop, this);
+        LOGI("%s", "start loop thread");
     }
     sendBindRequest();
 }
@@ -114,8 +118,7 @@ void RtcContext::sendBindRequest(void) {
 }
 
 void RtcContext::OnDtlsTransportConnecting(const DtlsTransport* dtlsTransport) {
-    LOG_DEBUG("%s", "DTLS handshake is connecting");
-    std::cout << "DTLS handshake is connecting" << std::endl;
+    LOGD("%s", "DTLS handshake is connecting");
 }
 
 void RtcContext::OnDtlsTransportConnected(
@@ -133,13 +136,11 @@ void RtcContext::OnDtlsTransportConnected(
 }
 
 void RtcContext::OnDtlsTransportFailed(const DtlsTransport* dtlsTransport) {
-    LOG_ERROR("%s", "DTLS handshake failed");
-    std::cout << "DTLS handshake failed" << std::endl;
+    LOGE("%s", "DTLS handshake failed");
 }
 
 void RtcContext::OnDtlsTransportClosed(const DtlsTransport* dtlsTransport) {
-    LOG_ERROR("%s", "DTLS handshake failed");
-    std::cout << "DTLS handshake failed" << std::endl;
+    LOGE("%s", "DTLS handshake failed");
 }
 
 void RtcContext::OnDtlsTransportSendData(
@@ -149,8 +150,7 @@ void RtcContext::OnDtlsTransportSendData(
 
 void RtcContext::OnDtlsTransportApplicationDataReceived(
     const DtlsTransport* dtlsTransport, const uint8_t* data, size_t len) {
-    LOG_DEBUG("%s", "DTLS handshake application data recieved");
-    std::cout << "DTLS handshake application data recieved" << std::endl;
+    LOGD("%s", "DTLS handshake application data recieved");
 }
     
 void RtcContext::onIceData(const char* data, int32_t size) {
@@ -167,24 +167,24 @@ void RtcContext::onRtpData(char* data, int32_t size) {
             _transport->onRtp(data, size);
         
         } else {
-            std::cout << "decrypt rtp packet failed" << std::endl;
+            LOGE("%s", "decrypt rtp packet failed");
         }
 
     } else {
-        std::cout << "not create srtp session yet" << std::endl;
+        LOGE("%s", "not create srtp session yet");
     }
 }
 
 void RtcContext::onRtcpData(char* data, int32_t size) {
     if (_srtpSessionRecv) {
         if (_srtpSessionRecv->DecryptSrtcp((uint8_t*)data, &size)) {
-            std::cout << "decrypt rtcp packet successfully" << std::endl;
+            LOGE("%s", "decrypt rtcp packet successfully");
         } else {
-            std::cout << "decrypt rtcp packet failed" << std::endl;
+            LOGE("%s", "decrypt rtcp packet failed");
         }
 
     } else {
-        std::cout << "not create srtp session yet" << std::endl;
+        LOGE("%s", "not create srtp session yet");
     }
 }
 
@@ -223,10 +223,12 @@ void RtcContext::stop(void) {
 }
 
 void RtcContext::loop() {
-    std::cout << "looping" << std::endl;
+    LOGI("%s", "socket thread is looping");
     while (_runFlag) {
         if (_client) {
+            LOGI("%s", "loop brfore read");
             _client->read();
+            LOGI("%s", "loop after read");
         
             if (_ticker->elapsedTime() > 5000) {
                 sendBindRequest();
@@ -234,6 +236,7 @@ void RtcContext::loop() {
             }
         }
     }
+    LOGI("%s", "socket thread is exiting");
 }
 
 }

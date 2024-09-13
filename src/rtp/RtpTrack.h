@@ -6,8 +6,9 @@
 #include <functional>
 #include <limits>
 #include <map>
-#include "Ticker.h"
 #include "RtpPacket.h"
+#include "Ticker.h"
+#include "Log.h"
 
 namespace frtc {
 
@@ -157,10 +158,10 @@ private:
     void output(SEQ seq, T packet) {
         auto next_seq = static_cast<SEQ>(_last_seq_out + 1);
         if (seq != next_seq) {
-            std::cout << "packet dropped: " << next_seq << " -> " << static_cast<SEQ>(seq - 1)
-                      << ", latest seq: " << _latest_seq
-                      << ", jitter buffer size: " << _pkt_sort_cache_map.size()
-                      << ", jitter buffer ms: " << _ticker->elapsedTime();
+            //LOGW("packet dropped: %d -> %d, latest seq: %d, jitter buffer size: %d, jitter buffer ms: %uld",
+            //      next_seq, static_cast<SEQ>(seq - 1),
+            //      _latest_seq, _pkt_sort_cache_map.size(),
+            //      _ticker->elapsedTime());
         }
         _last_seq_out = seq;
         _cb(seq, std::move(packet));

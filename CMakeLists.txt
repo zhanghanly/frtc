@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_BUILD_TYPE "DEBUG")
 
-add_definitions(-DCPPHTTPLIB_OPENSSL_SUPPORT)
+#add_definitions(-DCPPHTTPLIB_OPENSSL_SUPPORT)
 
 add_compile_options(-fPIC)
 
@@ -20,10 +20,12 @@ include_directories(${PROJECT_SOURCE_DIR}/thirdParty/include)
 
 include_directories(${PROJECT_SOURCE_DIR}/src/)
 
-link_directories(${PROJECT_SOURCE_DIR}/thirdParty/lib)
+include_directories(/home/hanly/work/frtc/thirdParty/include)
+
+#link_directories(${PROJECT_SOURCE_DIR}/thirdParty/lib)
+
+link_directories(/home/hanly/work/frtc/thirdParty/lib/arm64)
 
 add_library(rtc ${source} ${rtp} ${rtcp})
 
-#target_link_libraries(rtc
-#                      ssl
-#                      crypto)
+#target_link_libraries(rtc srtp2 ssl crypto log)

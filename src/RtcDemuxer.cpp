@@ -4,6 +4,7 @@
 #include "H264Track.h"
 #include "H265Track.h"
 #include "G711Track.h"
+#include "Log.h"
 
 namespace frtc {
     
@@ -26,14 +27,14 @@ void RtcDemuxer::inputRtp(RtpPacket::Ptr rtp) {
      switch (rtp->type) {
         case MediaType::video: {
             if (_videoDecoder) {
-                //std::cout << "video rtp decoder input video packet" << std::endl;
+                LOGI("%s", "video rtp decoder input video packet");
                 _videoDecoder->inputRtp(rtp, true);
             }
             break;
         }
         case MediaType::audio: {
             if (_audioDecoder) {
-                //std::cout << "audio rtp decoder input audio packet" << std::endl;
+                LOGI("%s", "audio rtp decoder input audio packet");
                 _audioDecoder->inputRtp(rtp, false);
             }
             break;
@@ -58,7 +59,6 @@ void RtcDemuxer::createAudioDecoder(MediaPayloadPtr audioPayload) {
     }
     
     TrackPtr track;
-    std::cout << "create audio encoding name=" << audioPayload->encodingName << std::endl;
     CodecId id = getCodecId(audioPayload->encodingName);
     switch (id) {
     case CodecId::g711a:
@@ -69,6 +69,7 @@ void RtcDemuxer::createAudioDecoder(MediaPayloadPtr audioPayload) {
         break;
     }
 
+    LOGI("create audio encoding name=%s", audioPayload->encodingName.c_str());
     _audioDecoder = createRtpDecoder(id);
     if (_audioDecoder) {
         _audioDecoder->setRecieve([this](FramePtr frame) {
@@ -87,7 +88,6 @@ void RtcDemuxer::createVideoDecoder(MediaPayloadPtr videoPayload) {
         return;
     }
 
-    std::cout << "create video encoding name=" << videoPayload->encodingName << std::endl;
     TrackPtr track;
     CodecId id = getCodecId(videoPayload->encodingName);
     switch (id) {
@@ -101,6 +101,7 @@ void RtcDemuxer::createVideoDecoder(MediaPayloadPtr videoPayload) {
         break;
     }
 
+    LOGI("create video encoding name=%s", videoPayload->encodingName.c_str());
     _videoDecoder = createRtpDecoder(id);
     if (_videoDecoder) {
         _videoDecoder->setRecieve([this](FramePtr frame) {

@@ -11,6 +11,7 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#include <android/log.h>
 #include <condition_variable>
 
 namespace frtc {
@@ -286,5 +287,17 @@ pid_t gettid();
         frtc::Log::instance()->append("[FATAL]", "[%u]%s:%d(%s): " fmt "\n", \
             frtc::gettid(), __FILE__, __LINE__, __FUNCTION__, ##args); \
     } while (0)
+
+
+
+#define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, "frtc", __VA_ARGS__)
+
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG  , "frtc", __VA_ARGS__)
+
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO   , "frtc", __VA_ARGS__)
+
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN   , "frtc", __VA_ARGS__)
+
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR  , "frtc", __VA_ARGS__)
 
 #endif

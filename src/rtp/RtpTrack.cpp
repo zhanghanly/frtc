@@ -33,7 +33,7 @@ RtpPacket::Ptr RtpTrack::inputRtp(MediaType type, int sample_rate, uint8_t* ptr,
         //无法把时间戳转换成毫秒
         return nullptr;
     }
-    RtpHeader* header = (RtpHeader*) ptr;
+    RtpHeader* header = (RtpHeader*)ptr;
     if (header->version != RtpPacket::kRtpVersion) {
         throw BadRtpException("invalid rtp version");
     }
@@ -63,11 +63,11 @@ RtpPacket::Ptr RtpTrack::inputRtp(MediaType type, int sample_rate, uint8_t* ptr,
         if (_ssrc_alive->elapsedTime() < 3 * 1000) {
             //接收正确ssrc的rtp在10秒内，那么我们认为存在多路rtp,忽略掉ssrc不匹配的rtp
             //WarnL << "ssrc mismatch, rtp dropped:" << ssrc << " != " << _ssrc;
-            std::cout << "ssrc mismatch, rtp dropped:" << ssrc << " != " << _ssrc;
+            LOGE("ssrc mismatch, rtp dropped: %d != %d", ssrc, _ssrc);
             return nullptr;
         }
         
-        std::cout << "rtp ssrc changed:" << _ssrc << " -> " << ssrc;
+        LOGE("rtp ssrc changed: %d -> %d", _ssrc, ssrc);
         _ssrc = ssrc;
         _ssrc_alive->resetTime();
     }

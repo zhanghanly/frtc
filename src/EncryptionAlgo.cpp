@@ -25,7 +25,7 @@ int32_t hmac_encode(const char* algo, const char* key, const int32_t key_length,
     } else if(strcmp(algo ,  "sha384")==0) {
         engine = EVP_sha384();
     } else {
-    	LOG_ERROR("ERROR_RTC_STUN unknown algo=%s", algo);
+    	LOGE("ERROR_RTC_STUN unknown algo=%s", algo);
         return -1;
     }
 
@@ -33,25 +33,25 @@ int32_t hmac_encode(const char* algo, const char* key, const int32_t key_length,
 	HMAC_CTX hctx;
 	HMAC_CTX_init(&hctx);
     if (&hctx == NULL) {
-        LOG_ERROR("hmac init faied");
+        LOGE("%s", "hmac init faied");
         return -1;
     }
 
     if (HMAC_Init_ex(&hctx, key, key_length, engine, NULL) < 0) {
         HMAC_CTX_cleanup(&hctx);
-        LOG_ERROR("hmac init faied");
+        LOGE("%s", "hmac init faied");
         return -1;
     }
 
     if (HMAC_Update(&hctx, (const uint8_t*)input, input_length) < 0) {
         HMAC_CTX_cleanup(&hctx);
-        LOG_ERROR("hmac update faied");
+        LOGE("%s", "hmac update faied");
         return -1;
     }
 
     if (HMAC_Final(&hctx, (uint8_t*)output, &output_length) < 0) {
         HMAC_CTX_cleanup(&hctx);
-        LOG_ERROR("hmac final faied");
+        LOGE("%s", "hmac final faied");
         return -1;
     }
 
@@ -60,26 +60,22 @@ int32_t hmac_encode(const char* algo, const char* key, const int32_t key_length,
 #else
     HMAC_CTX* ctx = HMAC_CTX_new();
     if (ctx == NULL) {
-        LOG_ERROR("hmac init faied");
-        std::cout << "hmac init faied" << std::endl;
+        LOGE("%s", "hmac init faied");
         return -1;
     }
     if (HMAC_Init_ex(ctx, key, key_length, engine, NULL) < 0) {
         HMAC_CTX_free(ctx);
-        LOG_ERROR("hmac init faied");
-        std::cout << "hmac init faied" << std::endl;
+        LOGE("%s", "hmac init faied");
         return -1;
     }
     if (HMAC_Update(ctx, (const uint8_t*)input, input_length) < 0) {
         HMAC_CTX_free(ctx);
-        LOG_ERROR("hmac update faied");
-        std::cout << "hmac update faied" << std::endl;
+        LOGE("%s", "hmac update faied");
         return -1;
     }
     if (HMAC_Final(ctx, (uint8_t*)output, output_length) < 0) {
         HMAC_CTX_free(ctx);
-        LOG_ERROR("hmac final faied");
-        std::cout << "hmac final faied" << std::endl;
+        LOGE("%s", "hmac final faied");
         return -1;
     }
 

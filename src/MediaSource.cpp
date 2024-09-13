@@ -9,7 +9,7 @@ MediaSource::MediaSource()
 
 void MediaSource::addTrack(TrackPtr track) { 
     if (_allTrackReady) {
-        LOG_WARN("come too late, all tracks are ready"); 
+        LOGW("%s", "come too late, all tracks are ready"); 
         return;
     }
     
@@ -17,11 +17,9 @@ void MediaSource::addTrack(TrackPtr track) {
     _trackMap[trackType] = track;
     track->addObservre([this](FramePtr frame) {
         if (_allTrackReady) {
-            std::cout << "track is ready" << std::endl;
             onTrackFrame(frame);
         } else {
-            std::cout << "track map size=" <<  _trackMap.size() << std::endl;
-            std::cout << "track is not ready" << std::endl;
+            LOGI("track is not ready, track map size=%lu", _trackMap.size());
             /*cache first*/
             auto& cacheLst = _cachedFrame[frame->mediaType()];
             while (cacheLst.size() > 50) {
@@ -50,10 +48,10 @@ void MediaSource::checkTrackIfReady(void) {
 }
 
 void MediaSource::inputFrame(FramePtr frame) {
-    std::cout << "media source input frame" << std::endl;
+    LOGI("%s", "media source input frame");
     auto frameType = frame->mediaType();
     if (_trackMap.find(frameType) == _trackMap.end()) {
-        std::cout << "not found track in map" << std::endl;
+        LOGW("%s", "not found track in map");
         return;
     }
 

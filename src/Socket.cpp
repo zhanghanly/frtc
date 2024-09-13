@@ -30,8 +30,11 @@ int TCPClient::send(const char* data, int32_t size) {
     return 0;
 }
 
-void TCPClient::read() {
+int TCPClient::setReadTimeout(uint32_t millseconds) {
+    return 0;
+}
 
+void TCPClient::read() {
 }
 
 int TCPClient::close() {
@@ -42,7 +45,7 @@ int TCPClient::close() {
 int UDPClient::connect(std::string& peerIp, int32_t port) {
     _sockFd = socket(AF_INET, SOCK_DGRAM, 0);
     if (_sockFd == -1) {
-        LOG_ERROR("create udp socket failed");
+        LOGE("%s", "create udp socket failed");
         return -1;
     }
     bzero(&_servAddr, sizeof(_servAddr));
@@ -56,6 +59,18 @@ int UDPClient::connect(std::string& peerIp, int32_t port) {
 int UDPClient::send(const char* data, int32_t size) {
     return sendto(_sockFd, data, size, 0, (struct sockaddr*)&_servAddr, sizeof(_servAddr));
 }
+
+int UDPClient::setReadTimeout(uint32_t millseconds) {
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = millseconds * 1000; 
+    if (setsockopt(_sockFd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        LOGE("%s", "socket option  SO_RCVTIMEO not support\n");
+        return -1;
+    }
+
+    return 0;
+}
     
 void UDPClient::read() {
     char buffer[4096];
@@ -64,7 +79,7 @@ void UDPClient::read() {
     if (recvLen > 0) {
         _callback(buffer, recvLen);
     } else {
-        std::cout << "read udp failed" << std::endl;
+        LOGE("%s", "read udp failed");
     }
 }
 

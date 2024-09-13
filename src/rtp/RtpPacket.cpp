@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 #include <sstream>
 #include "RtpPacket.h"
+#include "Log.h"
 
 namespace frtc {
 
@@ -109,6 +110,7 @@ uint32_t RtpPacket::getStamp() const {
 }
 
 uint64_t RtpPacket::getStampMS(bool ntp) const {
+    LOGI("stamp=%u sample_rate=%u", getStamp(), sample_rate);
     return ntp ? ntp_stamp : getStamp() * uint64_t(1000) / sample_rate;
 }
 

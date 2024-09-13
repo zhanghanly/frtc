@@ -1,6 +1,7 @@
 #include <iostream>
 #include "H265Track.h"
 #include "H265.h"
+#include "Log.h"
 
 namespace frtc {
 
@@ -48,7 +49,7 @@ bool H265Track::ready() {
 }
 
 void H265Track::inputFrame(FramePtr frame) {
-    std::cout << "h265 track input frame" << std::endl;
+    LOGI("%s", "h265 track input frame");
     H265FrameType type = getH265FrameType(frame->data()[frame->prefix()]);
     if (!frame->configFrame() && type != H265FrameType::NAL_SEI_PREFIX) {
         if (ready()) {
@@ -83,7 +84,7 @@ int32_t H265Track::fps() {
 
 void H265Track::inputFrame_1(FramePtr frame) {
     if (frame->keyFrame()) {
-        std::cout << "recieve key frame" << std::endl;
+        LOGI("%s", "recieve key frame");
         insertConfigFrame(frame);
         return Track::inputFrame(frame);
     }
@@ -91,17 +92,17 @@ void H265Track::inputFrame_1(FramePtr frame) {
     switch (getH265FrameType(frame->data()[frame->prefix()])) {
         case H265FrameType::NAL_VPS: {
             _vps = std::string(frame->data() + frame->prefix(), frame->size() - frame->prefix());
-            std::cout << "recieve vps frame, size=" << frame->size() << std::endl;
+            LOGI("recieve vps frame, size=%d", frame->size());
             break;
         }
         case H265FrameType::NAL_SPS: {
             _sps = std::string(frame->data() + frame->prefix(), frame->size() - frame->prefix());
-            std::cout << "recieve sps frame, size=" << frame->size() << std::endl;
+            LOGI("recieve sps frame, size=%d", frame->size());
             break;
         }
         case H265FrameType::NAL_PPS: {
             _pps = std::string(frame->data() + frame->prefix(), frame->size() - frame->prefix());
-            std::cout << "recieve pps frame, size=" << frame->size() << std::endl;
+            LOGI("recieve pps frame, size=%d", frame->size());
             break;
         }
         default: {
@@ -125,7 +126,7 @@ void H265Track::insertConfigFrame(FramePtr frame) {
         vpsFrame->_buffer->append(0x01); 
         vpsFrame->_buffer->append(_vps.c_str(), _vps.size());
         
-        std::cout << "out put vps frame" << std::endl;
+        LOGI("%s", "out put vps frame");
         Track::inputFrame(vpsFrame);
     }
     if (!_sps.empty()) {
@@ -141,7 +142,7 @@ void H265Track::insertConfigFrame(FramePtr frame) {
         spsFrame->_buffer->append(0x01); 
         spsFrame->_buffer->append(_sps.c_str(), _sps.size());
         
-        std::cout << "out put sps frame" << std::endl;
+        LOGI("%s", "out put sps frame");
         Track::inputFrame(spsFrame);
     }
     if (!_pps.empty()) {
@@ -157,7 +158,7 @@ void H265Track::insertConfigFrame(FramePtr frame) {
         ppsFrame->_buffer->append(0x01); 
         ppsFrame->_buffer->append(_pps.c_str(), _pps.size());
         
-        std::cout << "out put pps frame" << std::endl;
+        LOGI("%s", "out put pps frame");
         Track::inputFrame(ppsFrame);
     }
 }

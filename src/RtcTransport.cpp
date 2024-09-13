@@ -3,6 +3,7 @@
 #include "RtcTransport.h"
 #include "MediaTrack.h"
 #include "RtcContext.h"
+#include "Log.h"
 
 namespace frtc {
     
@@ -40,15 +41,15 @@ void RtcTransport::loadSdp(SdpSp sdp) {
         _ssrc_to_track[track->answer_rtp_ssrc] = track;
         _ssrc_to_track[track->answer_rtx_ssrc] = track;
 
-        std::cout << "track ssrc=" << track->answer_rtp_ssrc << " rtx ssrc=" << track->answer_rtx_ssrc << std::endl;    
-        std::cout << "create track->rtp_payload->payloadType " << (track->rtp_payload)->payloadType << std::endl;
+        LOGI("track ssrc=%d  rtx ssrc=%d", track->answer_rtp_ssrc, track->answer_rtx_ssrc);    
+        LOGI("create track->rtp_payload->payloadType=%d", (track->rtp_payload)->payloadType);
         // rtp pt --> MediaTrack
         _pt_to_track.emplace(
             (track->rtp_payload)->payloadType, std::unique_ptr<WrappedMediaTrack>(new WrappedRtpTrack(track, _twcc_ctx, *this)));
         if (media->support_rtx) {
             // rtx pt --> MediaTrack
             _pt_to_track.emplace((track->rtx_payload)->payloadType, std::unique_ptr<WrappedMediaTrack>(new WrappedRtxTrack(track)));
-            std::cout << "create rtx track, ssrc=" << track->answer_rtx_ssrc << " pt=" << track->rtx_payload->payloadType << std::endl;
+            LOGI("create rtx track, ssrc=%d, pt=%d", track->answer_rtx_ssrc, track->rtx_payload->payloadType);
         }
         // 记录rtp ext类型与id的关系，方便接收或发送rtp时修改rtp ext id
         track->rtp_ext_ctx = std::make_shared<RtpExtContext>();
@@ -65,20 +66,19 @@ void RtcTransport::loadSdp(SdpSp sdp) {
     _demuxer->loadSdp(sdp);
 } 
 
-
 void RtcTransport::onRtp(const char* data, uint32_t size) {
     _alive_ticker->resetTime();
     RtpHeader* rtp = (RtpHeader*)data;
     // 根据接收到的rtp的pt信息，找到该流的信息
     auto it = _pt_to_track.find(rtp->pt);
     if (it == _pt_to_track.end()) {
-        std::cout << "unknown rtp pt: " << (int)rtp->pt << std::endl;
+        LOGE("unknown rtp pt: %d", (int)rtp->pt);
         return;
     }
         
     uint64_t stamp_ms = getCurrentMillisecond();
     it->second->inputRtp(data, size, stamp_ms, rtp);
-    //std::cout << "revieve rtp pt: " << (int)rtp->pt << std::endl;
+    LOGI("revieve rtp pt: %d", (int)rtp->pt);
 }
 
 void RtcTransport::onRtcp(const char* data, uint32_t size) {
@@ -94,7 +94,7 @@ void RtcTransport::onRtcp(const char* data, uint32_t size) {
                 auto& track = it->second;
                 auto rtp_chn = track->getRtpChannel(sr->ssrc);
                 if (!rtp_chn) {
-                    std::cout << "unknown sr rtcp packet:" << rtcp->dumpString() << std::endl;
+                    LOGW("unknown sr rtcp packet:%s", rtcp->dumpString().c_str());
                 } else {
                     // 设置rtp时间戳与ntp时间戳的对应关系
                     rtp_chn->setNtpStamp(sr->rtpts, sr->getNtpUnixStampMS());
@@ -104,7 +104,7 @@ void RtcTransport::onRtcp(const char* data, uint32_t size) {
                     }
                 }
             } else {
-                std::cout << "unknown  ssrc  sr rtcp packet:" << rtcp->dumpString() << std::endl;
+                LOGE("unknown  ssrc  sr rtcp packet:%s", rtcp->dumpString().c_str());
             }
             break;
         }
@@ -204,13 +204,13 @@ void RtcTransport::createRtpChannel(const std::string& rid, uint32_t ssrc, Media
                 strong_self->onSendNack(track, nack, ssrc);
             }
         
-            std::cout << "send rtcp nack packet" << std::endl;
+            LOGI("%s", "send rtcp nack packet");
         });
-    std::cout << "create rtp receiver of ssrc:" << ssrc << ", rid:" << rid << ", codec:" << std::endl;
+    LOGI("create rtp receiver of ssrc: %d rid:%s", ssrc, rid.c_str());
 }
 
 void RtcTransport::onSortedRtp(MediaTrack& track, const std::string& rid, RtpPacket::Ptr rtp) {
-    //std::cout << "recieve sorted rtp packet, pt=" << (int)rtp->getHeader()->pt << std::endl;
+    LOGI("%s", "on receive sorted rtp packet");
     if (_demuxer) {
         _demuxer->inputRtp(rtp);
     }
@@ -224,7 +224,7 @@ void RtcTransport::onSortedRtp(MediaTrack& track, const std::string& rid, RtpPac
             auto rr = ref->createRtcpRR(track.answer_rtp_ssrc);
             if (_context) {
                 _context->sendRtcpPacket(rr->data(), rr->size());
-                std::cout << "send rtcp rr packet" << std::endl;
+                LOGI("%s", "send rtcp rr packet");
             }
             _rr_ticker->resetTime();
         }
@@ -239,7 +239,7 @@ void RtcTransport::onSendNack(MediaTrack& track, const FCI_NACK& nack, uint32_t 
         _context->sendRtcpPacket((char*)rtcp.get(), rtcp->getSize());
     }
 
-    std::cout << "send rtcp nack request" << std::endl;
+    LOGI("%s", "send rtcp nack request");
 }
     
 void RtcTransport::onSendTwcc(uint32_t ssrc, const std::string& twcc_fci) {
@@ -250,18 +250,16 @@ void RtcTransport::onSendTwcc(uint32_t ssrc, const std::string& twcc_fci) {
         _context->sendRtcpPacket((char*)rtcp.get(), rtcp->getSize());
     }
     
-    std::cout << "send rtcp twcc request" << std::endl;
+    LOGI("%s", "send rtcp twcc request");
 }
     
 void RtcTransport::addTrack(TrackPtr track) {
-    std::cout << __FUNCTION__ << " add track" << std::endl;
     if (_source && track) {
         _source->addTrack(track);
     }
 }
     
 void RtcTransport::inputFrame(FramePtr frame) {
-    //std::cout << __FUNCTION__ << " input frame" << std::endl;
     if (_source && frame) {
         _source->inputFrame(frame);
     }
@@ -269,12 +267,12 @@ void RtcTransport::inputFrame(FramePtr frame) {
 
 void RtcTransport::onFrame(FramePtr frame) {
     if (frame) {
-        //if (frame->mediaType() == MediaType::video) {
-        //    std::cout << __FUNCTION__ << " on video frame" << std::endl;
+        if (frame->mediaType() == MediaType::video) {
+            LOGI("%s", "on video frame");
 
-        //} else if (frame->mediaType() == MediaType::audio) {
-        //    std::cout << __FUNCTION__ << " on audio frame" << std::endl;
-        //}
+        } else if (frame->mediaType() == MediaType::audio) {
+            LOGI("%s", "on audio frame");
+        }
 
         if (_frame_cb) {
             _frame_cb(frame);

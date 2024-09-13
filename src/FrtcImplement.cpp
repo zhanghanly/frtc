@@ -1,10 +1,12 @@
 #include <iostream>
 #include "PeerConnection.h"
 #include "FrtcApi.h"
+#include "Log.h"
 
 void* frtcCreateCtx(void) {
     frtc::PeerConnection* peer = new frtc::PeerConnection();
     peer->initializer(nullptr);
+    LOGI("%s", "create peer connection finished");
 
     return peer;
 }
@@ -17,12 +19,12 @@ void frtcSetStreamConfig(void* ctx, FrtcStreamConfig* config) {
 }
 
 int frtcConnectSignalServer(void* ctx, const char* url) {
-    std::cout << "connect signal server start" << std::endl;
+    LOGI("%s", "connect signal server start");
     frtc::PeerConnection* peer = (frtc::PeerConnection*)ctx;
     if (peer) {
         peer->connnectSignalServer(url);
         peer->startEstablishConnection();
-        std::cout << "connect signal server complete" << std::endl;
+        LOGI("%s", "connect signal server complete");
     }
     
     return 0;

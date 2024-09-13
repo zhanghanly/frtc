@@ -44,13 +44,13 @@ class_name &class_name::Instance() { \
 	do                                                                                               \
 	{                                                                                                \
 		if (ERR_peek_error() == 0)                                                                     \
-			LOG_ERROR("OpenSSL error [desc:'%s']", desc);                                                 \
+			LOGE("OpenSSL error [desc:'%s']", desc);                                                 \
 		else                                                                                           \
 		{                                                                                              \
 			int64_t err;                                                                                 \
 			while ((err = ERR_get_error()) != 0)                                                         \
 			{                                                                                            \
-				LOG_ERROR("OpenSSL error [desc:'%s', error:'%s']", desc, ERR_error_string(err, nullptr));   \
+				LOGE("OpenSSL error [desc:'%s', error:'%s']", desc, ERR_error_string(err, nullptr));   \
 			}                                                                                            \
 			ERR_clear_error();                                                                           \
 		}                                                                                              \
@@ -275,7 +275,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 			X509_free(certificate);
 
 		//MS_THROW_ERROR("DTLS certificate and private key generation failed");
-		LOG_ERROR("%s", "DTLS certificate and private key generation failed");
+		LOGE("%s", "DTLS certificate and private key generation failed");
 	}
 
 	void DtlsTransport::DtlsEnvironment::ReadCertificateAndPrivateKeyFromFiles()
@@ -422,7 +422,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		}
 
 		//MS_DEBUG_2TAGS(dtls, srtp, "setting SRTP cryptoSuites for DTLS: %s", dtlsSrtpCryptoSuites.c_str());
-		LOG_DEBUG("setting SRTP cryptoSuites for DTLS: %s", dtlsSrtpCryptoSuites.c_str());
+		LOGD("setting SRTP cryptoSuites for DTLS: %s", dtlsSrtpCryptoSuites.c_str());
 		// NOTE: This function returns 0 on success.
 		ret = SSL_CTX_set_tlsext_use_srtp(sslCtx, dtlsSrtpCryptoSuites.c_str());
 		if (ret != 0) {
@@ -442,7 +442,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		}
 
 		//MS_THROW_ERROR("SSL context creation failed");
-		LOG_ERROR("%s", "SSL context creation failed");
+		LOGE("%s", "SSL context creation failed");
 	}
 
 	void DtlsTransport::DtlsEnvironment::GenerateFingerprints() {
@@ -480,7 +480,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 
 				default:
 					//MS_THROW_ERROR("unknown algorithm");
-					LOG_ERROR("%s", "unknown algorithm");
+					LOGE("%s", "unknown algorithm");
 			}
 
 			ret = X509_digest(certificate, hashFunction, binaryFingerprint, &size);
@@ -639,14 +639,14 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		Role previousLocalRole = this->localRole;
 		if (localRole == previousLocalRole) {
 			//MS_ERROR("same local DTLS role provided, doing nothing");
-			LOG_ERROR("%s", "same local DTLS role provided, doing nothing");
+			LOGE("%s", "same local DTLS role provided, doing nothing");
 			return;
 		}
 
 		// If the previous local DTLS role was 'client' or 'server' do reset.
 		if (previousLocalRole == Role::CLIENT || previousLocalRole == Role::SERVER) {
 			//MS_DEBUG_TAG(dtls, "resetting DTLS due to local role change");
-			LOG_DEBUG("%s", "resetting DTLS due to local role change");
+			LOGD("%s", "resetting DTLS due to local role change");
 			Reset();
 		}
 
@@ -661,8 +661,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 			case Role::CLIENT:
 			{
 				//MS_DEBUG_TAG(dtls, "running [role:client]");
-				LOG_DEBUG("%s", "running [role:client]");
-				std::cout << "running [role:client]" << std::endl;
+				LOGD("%s", "running [role:client]");
 				SSL_set_connect_state(this->ssl);
 				SSL_do_handshake(this->ssl);
 				SendPendingOutgoingDtlsData();
@@ -674,7 +673,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 			case Role::SERVER:
 			{
 				//MS_DEBUG_TAG(dtls, "running [role:server]");
-				LOG_DEBUG("%s", "running [role:server]");
+				LOGD("%s", "running [role:server]");
 				SSL_set_accept_state(this->ssl);
 				SSL_do_handshake(this->ssl);
 
@@ -684,7 +683,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 			default:
 			{
 				//MS_ABORT("invalid local DTLS role");
-				LOG_ERROR("%s", "invalid local DTLS role");
+				LOGE("%s", "invalid local DTLS role");
 			}
 		}
 	}
@@ -698,7 +697,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		// so we may need to process it now.
 		if (this->handshakeDone && this->state != DtlsState::CONNECTED) {
 			//MS_DEBUG_TAG(dtls, "handshake already done, processing it right now");
-			LOG_DEBUG("%s", "handshake already done, processing it right now");
+			LOGD("%s", "handshake already done, processing it right now");
 			return ProcessHandshake();
 		}
 
@@ -711,7 +710,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		int read;
 		if (!IsRunning()) {
 			//MS_ERROR("cannot process data while not running");
-			LOG_ERROR("%s", "cannot process data while not running");
+			LOGE("%s", "cannot process data while not running");
 			return;
 		}
 
@@ -725,7 +724,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 			//  "OpenSSL BIO_write() wrote less (%zu bytes) than given data (%zu bytes)",
 			//  static_cast<size_t>(written),
 			//  len);
-			LOG_WARN(
+			LOGW(
 			  "OpenSSL BIO_write() wrote less (%zu bytes) than given data (%zu bytes)",
 			  static_cast<size_t>(written),
 			  len);
@@ -750,7 +749,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 			// It is allowed to receive DTLS data even before validating remote fingerprint.
 			if (!this->handshakeDone) {
 				//MS_WARN_TAG(dtls, "ignoring application data received while DTLS handshake not done");
-				LOG_WARN("%s", "ignoring application data received while DTLS handshake not done");
+				LOGW("%s", "ignoring application data received while DTLS handshake not done");
 
 				return;
 			}
@@ -766,13 +765,13 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		// We cannot send data to the peer if its remote fingerprint is not validated.
 		if (this->state != DtlsState::CONNECTED) {
 			//MS_WARN_TAG(dtls, "cannot send application data while DTLS is not fully connected");
-			LOG_WARN("%s", "cannot send application data while DTLS is not fully connected");
+			LOGW("%s", "cannot send application data while DTLS is not fully connected");
 			return;
 		}
 
 		if (len == 0) {
 			//MS_WARN_TAG(dtls, "ignoring 0 length data");
-			LOG_WARN("%s", "ignoring 0 length data");
+			LOGW("%s", "ignoring 0 length data");
 			return;
 		}
 
@@ -787,7 +786,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		{
 			//MS_WARN_TAG(
 			//  dtls, "OpenSSL SSL_write() wrote less (%d bytes) than given data (%zu bytes)", written, len);
-			LOG_WARN("OpenSSL SSL_write() wrote less (%d bytes) than given data (%zu bytes)", written, len);
+			LOGW("OpenSSL SSL_write() wrote less (%d bytes) than given data (%zu bytes)", written, len);
 		}
 
 		// Send data.
@@ -801,7 +800,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 			return;
 
 		//MS_WARN_TAG(dtls, "resetting DTLS transport");
-		LOG_WARN("%s", "resetting DTLS transport");
+		LOGW("%s", "resetting DTLS transport");
 		// Stop the DTLS timer.
 		//this->timer = nullptr;
 		// We need to reset the SSL instance so we need to "shutdown" it, but we
@@ -867,7 +866,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 
 			default:
 				//MS_WARN_TAG(dtls, "SSL status: unknown error");
-				LOG_WARN("%s", "SSL status: unknown error");
+				LOGW("%s", "SSL status: unknown error");
 		}
 
 		// Check if the handshake (or re-handshake) has been done right now.
@@ -888,7 +887,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		{
 			if (this->state == DtlsState::CONNECTED) {
 				//MS_DEBUG_TAG(dtls, "disconnected");
-				LOG_DEBUG("%s", "disconnected");
+				LOGD("%s", "disconnected");
 
 				Reset();
 				// Set state and notify the listener.
@@ -896,7 +895,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 				this->listener->OnDtlsTransportClosed(this);
 			} else {
 				//MS_WARN_TAG(dtls, "connection failed");
-				LOG_WARN("%s", "connection failed");
+				LOGW("%s", "connection failed");
 
 				Reset();
 				// Set state and notify the listener.
@@ -926,7 +925,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 			return;
 
 		//MS_DEBUG_DEV("%" PRIu64 " bytes of DTLS data ready to sent to the peer", read);
-		LOG_DEBUG("%d bytes of DTLS data ready to sent to the peer", read);
+		LOGD("%ld bytes of DTLS data ready to sent to the peer", read);
 
 		// Notify the listener.
 		this->listener->OnDtlsTransportSendData(
@@ -961,7 +960,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		}
 		else if (timeoutMs < 30000) {
 			//MS_DEBUG_DEV("DTLS timer set in %" PRIu64 "ms", timeoutMs);
-			LOG_DEBUG("DTLS timer set in %d ms", timeoutMs);
+			LOGD("DTLS timer set in %lu ms", timeoutMs);
 
 			//std::weak_ptr<DtlsTransport> weak_self = shared_from_this();
 			//this->timer = std::make_shared<Timer>(timeoutMs / 1000.0f, [weak_self](){
@@ -978,7 +977,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		else
 		{
 			//MS_WARN_TAG(dtls, "DTLS timeout too high (%" PRIu64 "ms), resetting DLTS", timeoutMs);
-			LOG_WARN("DTLS timeout too high %d, resetting DLTS", timeoutMs);
+			LOGW("DTLS timeout too high %lu, resetting DLTS", timeoutMs);
 			Reset();
 			// Set state and notify the listener.
 			this->state = DtlsState::FAILED;
@@ -1016,7 +1015,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		// there is no audio/video.
 		//MS_WARN_2TAGS(dtls, srtp, "SRTP crypto suite not negotiated");
 		//MS_WARN_2TAGS(dtls, srtp, "SRTP crypto suite not negotiated");
-		LOG_WARN("%s", "SRTP crypto suite not negotiated");
+		LOGW("%s", "SRTP crypto suite not negotiated");
 
 		Reset();
 
@@ -1041,7 +1040,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		certificate = SSL_get_peer_certificate(this->ssl);
 		if (!certificate) {
 			//MS_WARN_TAG(dtls, "no certificate was provided by the peer");
-			LOG_WARN("%s", "no certificate was provided by the peer");
+			LOGW("%s", "no certificate was provided by the peer");
 
 			return false;
 		}
@@ -1070,7 +1069,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 
 			default:
 				//MS_ABORT("unknown algorithm");
-				LOG_ERROR("%s", "unknown algorithm");
+				LOGE("%s", "unknown algorithm");
 		}
 
 		// Compare the remote fingerprint with the value given via signaling.
@@ -1078,7 +1077,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 
 		if (ret == 0) {
 			//MS_ERROR("X509_digest() failed");
-			LOG_ERROR("X509_digest() failed");
+			LOGE("%s", "X509_digest() failed");
 			X509_free(certificate);
 
 			return false;
@@ -1102,7 +1101,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		}
 
 		//MS_DEBUG_TAG(dtls, "valid remote fingerprint");
-		LOG_DEBUG("valid remote fingerprint");
+		LOGD("%s", "valid remote fingerprint");
 		// Get the remote certificate in PEM format.
 		BIO* bio = BIO_new(BIO_s_mem());
 
@@ -1267,7 +1266,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 			SrtpCryptoSuiteMapEntry* cryptoSuiteEntry = std::addressof(srtpCryptoSuite);
 			if (std::strcmp(sslSrtpCryptoSuite->name, cryptoSuiteEntry->name) == 0) {
 				//MS_DEBUG_2TAGS(dtls, srtp, "chosen SRTP crypto suite: %s", cryptoSuiteEntry->name);
-				LOG_DEBUG("chosen SRTP crypto suite: %s", cryptoSuiteEntry->name);
+				LOGD("chosen SRTP crypto suite: %s", cryptoSuiteEntry->name);
 				negotiatedSrtpCryptoSuite = cryptoSuiteEntry->cryptoSuite;
 			}
 		}
@@ -1293,7 +1292,7 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 		if ((where & SSL_CB_LOOP) != 0)
 		{
 			//MS_DEBUG_TAG(dtls, "[role:%s, action:'%s']", role, SSL_state_string_long(this->ssl));
-			LOG_DEBUG("[role:%s, action:'%s']", role, SSL_state_string_long(this->ssl));
+			LOGD("[role:%s, action:'%s']", role, SSL_state_string_long(this->ssl));
 		}
 		else if ((where & SSL_CB_ALERT) != 0)
 		{
@@ -1316,37 +1315,37 @@ inline static unsigned int onSslDtlsTimer(SSL* /*ssl*/, unsigned int timerUs) {
 			if ((where & SSL_CB_READ) != 0)
 			{
 				//MS_WARN_TAG(dtls, "received DTLS %s alert: %s", alertType, SSL_alert_desc_string_long(ret));
-				LOG_WARN("received DTLS %s alert: %s", alertType, SSL_alert_desc_string_long(ret));
+				LOGW("received DTLS %s alert: %s", alertType, SSL_alert_desc_string_long(ret));
 			}
 			else if ((where & SSL_CB_WRITE) != 0)
 			{
 				//MS_DEBUG_TAG(dtls, "sending DTLS %s alert: %s", alertType, SSL_alert_desc_string_long(ret));
-				LOG_DEBUG("sending DTLS %s alert: %s", alertType, SSL_alert_desc_string_long(ret));
+				LOGD("sending DTLS %s alert: %s", alertType, SSL_alert_desc_string_long(ret));
 			}
 			else
 			{
 				//MS_DEBUG_TAG(dtls, "DTLS %s alert: %s", alertType, SSL_alert_desc_string_long(ret));
-				LOG_DEBUG("DTLS %s alert: %s", alertType, SSL_alert_desc_string_long(ret));
+				LOGD("DTLS %s alert: %s", alertType, SSL_alert_desc_string_long(ret));
 			}
 		}
 		else if ((where & SSL_CB_EXIT) != 0)
 		{
 			if (ret == 0)
 				//MS_DEBUG_TAG(dtls, "[role:%s, failed:'%s']", role, SSL_state_string_long(this->ssl));
-				LOG_DEBUG("[role:%s, failed:'%s']", role, SSL_state_string_long(this->ssl));
+				LOGD("[role:%s, failed:'%s']", role, SSL_state_string_long(this->ssl));
 			else if (ret < 0)
 				//MS_DEBUG_TAG(dtls, "role: %s, waiting:'%s']", role, SSL_state_string_long(this->ssl));
-				LOG_DEBUG("role: %s, waiting:'%s']", role, SSL_state_string_long(this->ssl));
+				LOGD("role: %s, waiting:'%s']", role, SSL_state_string_long(this->ssl));
 		}
 		else if ((where & SSL_CB_HANDSHAKE_START) != 0)
 		{
-			LOG_DEBUG("%s", "DTLS handshake start");
+			LOGD("%s", "DTLS handshake start");
 			//MS_DEBUG_TAG(dtls, "DTLS handshake start");
 		}
 		else if ((where & SSL_CB_HANDSHAKE_DONE) != 0)
 		{
 			//MS_DEBUG_TAG(dtls, "DTLS handshake done");
-			LOG_DEBUG("%s", "DTLS handshake done");
+			LOGD("%s", "DTLS handshake done");
 			this->handshakeDoneNow = true;
 		}
 		// NOTE: checking SSL_get_shutdown(this->ssl) & SSL_RECEIVED_SHUTDOWN here upon

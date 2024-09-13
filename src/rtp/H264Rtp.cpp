@@ -1,4 +1,5 @@
 ﻿#include "H264Rtp.h"
+#include "Log.h"
 
 namespace frtc {
 
@@ -6,17 +7,17 @@ namespace frtc {
 
 class FuFlags {
 public:
-#if __BYTE_ORDER == __BIG_ENDIAN
-    unsigned start_bit: 1;
-    unsigned end_bit: 1;
-    unsigned reserved: 1;
+//#if __BYTE_ORDER == __BIG_ENDIAN
+//    unsigned start_bit: 1;
+//    unsigned end_bit: 1;
+//    unsigned reserved: 1;
+//    unsigned nal_type: 5;
+//#else
     unsigned nal_type: 5;
-#else
-    unsigned nal_type: 5;
     unsigned reserved: 1;
     unsigned end_bit: 1;
     unsigned start_bit: 1;
-#endif
+//#endif
 };
 
 #pragma pack(pop)
@@ -40,7 +41,7 @@ bool H264RtpDecoder::inputRtp(RtpPacket::Ptr rtp, bool key_pos) {
     _is_gop = decodeRtp(rtp);
     if (!_gop_dropped && seq != (uint16_t)(_last_seq + 1) && _last_seq) {
         _gop_dropped = true;
-        //WarnL << "start drop h264 gop, last seq:" << _last_seq << ", rtp:\r\n" << rtp->dumpString();
+        LOGW("start drop h264 gop, last seq: %d, rtp:%s", (int)_last_seq, rtp->dumpString().c_str());
     }
     _last_seq = seq;
     // 确保有sps rtp的时候，gop从sps开始；否则从关键帧开始
@@ -80,7 +81,7 @@ bool H264RtpDecoder::unpackStapA(const RtpPacket::Ptr &rtp, const uint8_t *ptr, 
     while (ptr + 2 < end) {
         uint16_t len = (ptr[0] << 8) | ptr[1];
         if (!len || ptr + len > end) {
-            //WarnL << "invalid rtp data size:" << len << ",rtp:\r\n" << rtp->dumpString();
+            LOGW("invalid rtp data size: %d, rtp:%s", len, rtp->dumpString().c_str());
             _gop_dropped = true;
             break;
         }
@@ -133,6 +134,7 @@ bool H264RtpDecoder::mergeFu(const RtpPacket::Ptr &rtp, const uint8_t *ptr, ssiz
 bool H264RtpDecoder::decodeRtp(const RtpPacket::Ptr &rtp) {
     auto payload_size = rtp->getPayloadSize();
     if (payload_size <= 0) {
+        LOGW("%s", "h264 rtp payload size < 0");
         //无实际负载
         return false;
     }
@@ -156,7 +158,7 @@ bool H264RtpDecoder::decodeRtp(const RtpPacket::Ptr &rtp) {
                 return singleFrame(rtp, frame, payload_size, stamp);
             }
             _gop_dropped = true;
-            //WarnL << "不支持该类型的264 RTP包, nal type:" << nal << ", rtp:\r\n" << rtp->dumpString();
+            LOGW("not support 264 RTP package, nal type:%d rtp:%s", nal, rtp->dumpString().c_str());
             return false;
         }
     }
@@ -177,6 +179,7 @@ void H264RtpDecoder::outputFrame(const RtpPacket::Ptr &rtp, const H264Frame::Ptr
     }
     if (!_gop_dropped) {
         //RtpCodec::inputFrame(frame);
+        LOGI("%s", "h264 RtpDecoder output video frame"); 
         RtpDecoder::outputFrame(frame); 
     }
     _frame = obtainFrame();

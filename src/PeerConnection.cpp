@@ -17,7 +17,7 @@ void PeerConnection::initializer(RtcConfigSp config) {
 
                 if (frame->mediaType() == MediaType::video) {
                     if (frame->keyFrame() && !_setVideoParam) {
-                        std::cout << "call video param callback" << std::endl;
+                        LOGI("%s", "call video param callback");
                         if (frame->codecId() == CodecId::h264) {
                             _videoParam.codec = FRTC_H264;
                         } else if (frame->codecId() == CodecId::h265) {
@@ -30,7 +30,7 @@ void PeerConnection::initializer(RtcConfigSp config) {
                     }
                     if (frame->configFrame()) {
                         if (!_setVideoParam) {
-                            std::cout << "config frame" << std::endl;
+                            LOGI("%s", "config frame");
                             memcpy(_videoParam.extra + _videoParam.extraLen, frame->data(), frame->size()); 
                             _videoParam.extraLen += frame->size();
                         }
@@ -48,6 +48,7 @@ void PeerConnection::initializer(RtcConfigSp config) {
                         param.samplerate = 8000;
                         param.samplerateDepth = 16;
 
+                        LOGI("%s", "call audio param callback");
                         _config.audio_param_cb(_config.user_data, &param);
                         _setAudioParam = true;
                     }
@@ -68,10 +69,10 @@ void PeerConnection::connnectSignalServer(const std::string& url) {
         _signalClient->setReadCb([this](SignalErr code, const std::string& sdp) {
             if (code == SignalErr::SUCCESS) {
                 _context->setRemoteSdp(sdp);
-                std::cout << "set remote sdp" << std::endl;
+                LOGI("%s", "set remote sdp");
 
             } else {
-                std::cout << "connect server failed" << std::endl;
+                LOGE("%s", "connect server failed");
             }
         });
     }
@@ -83,7 +84,7 @@ void PeerConnection::connnectSignalServer(const std::string& url) {
     
 void PeerConnection::startEstablishConnection() {
     _context->startConnectPeer();
-    std::cout << "start connect peer" << std::endl;
+    LOGI("%s", "start connect peer");
 }
 
 void PeerConnection::setStreamConfig(FrtcStreamConfig* config) {
@@ -97,20 +98,20 @@ void PeerConnection::setStreamConfig(FrtcStreamConfig* config) {
 }
 
 std::string PeerConnection::replaceUrl(const std::string& webrtcUrl) {
-    std::cout << "old url=" << webrtcUrl << std::endl;
-    
+    LOGI("old url=%s", webrtcUrl.c_str());
     if (webrtcUrl.find("webrtc://") != std::string::npos) {
-        std::string httpsUrl = "https"; 
-        httpsUrl += webrtcUrl.c_str() + 6;
-        std::cout << "new url=" << httpsUrl << std::endl;
+        std::string httpUrl = "http"; 
+        httpUrl += webrtcUrl.c_str() + 6;
+        LOGI("new url=%s", httpUrl.c_str());
 
-        return httpsUrl;
-    } 
+        return httpUrl;
+    }
 
     return webrtcUrl;
 }
 
 void PeerConnection::destory() {
+    LOGI("%s", "call PeerConnection destory");
     _context->stop();
 }
 

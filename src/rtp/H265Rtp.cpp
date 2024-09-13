@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include "H265Rtp.h"
+#include "Log.h"
 
 namespace frtc {
 
@@ -235,6 +236,7 @@ void H265RtpDecoder::outputFrame(const RtpPacket::Ptr &rtp, const H265Frame::Ptr
     }
     if (!_gop_dropped) {
         //RtpCodec::inputFrame(frame);
+         LOGI("%s", "h265 RtpDecoder output video frame"); 
         RtpDecoder::outputFrame(frame);
     }
     _frame = obtainFrame();

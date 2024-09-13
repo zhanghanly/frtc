@@ -1,5 +1,5 @@
-#include <iostream>
 #include "G711Rtp.h"
+#include "Log.h"
 
 namespace frtc {
 
@@ -34,7 +34,7 @@ namespace frtc {
             _drop_flag = false;
         } else if (_last_seq != 0 && (uint16_t)(_last_seq + 1) != seq) {
             //时间戳未发生变化，但是seq却不连续，说明中间rtp丢包了，那么整帧应该废弃
-            std::cout << "rtp丢包:" << _last_seq << " -> " << seq << std::endl;
+            LOGI("rtp is lost: %d -> %d", _last_seq, seq);
             _drop_flag = true;
             _frame->_buffer->clear();
         }

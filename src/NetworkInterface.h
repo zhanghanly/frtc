@@ -47,7 +47,7 @@ typedef std::shared_ptr<SignalInterface> NetworkSp;
 
 class HttpClient : public SignalInterface {
 public:
-    typedef std::shared_ptr<httplib::SSLClient> ClientSp;
+    typedef std::shared_ptr<httplib::Client> ClientSp;
     
     ~HttpClient() = default;
     

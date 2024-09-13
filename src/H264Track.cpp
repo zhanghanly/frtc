@@ -26,7 +26,7 @@ bool H264Track::ready() {
 }
 
 void H264Track::inputFrame(FramePtr frame) {
-    std::cout << "h264 track input frame" << std::endl;
+    LOGI("%s", "h264 track input frame");
     H264FrameType type = getH264FrameType(frame->data()[frame->prefix()]);
     if (type == H264FrameType::NAL_B_P || type == H264FrameType::NAL_IDR) {
         if (ready()) {
@@ -43,17 +43,22 @@ void H264Track::inputFrame_1(FramePtr frame) {
         case H264FrameType::NAL_SPS: {
             _sps = std::string(frame->data() + frame->prefix(), frame->size() - frame->prefix());
             //Track::inputFrame(frame);
+            LOGI("%s", "h264 track recieve sps frame");
             break;
         }
         case H264FrameType::NAL_PPS: {
             _pps = std::string(frame->data() + frame->prefix(), frame->size() - frame->prefix());
             //Track::inputFrame(frame);
+            LOGI("%s", "h264 track recieve pps frame");
             break;
         }
         default: {
             // 判断是否是I帧, 并且如果是,那判断前面是否插入过config帧, 如果插入过就不插入了
             if (frame->keyFrame()) {
+                LOGI("%s", "h264 track recieve key frame");
                 insertConfigFrame(frame);
+            } else {
+                LOGI("%s", "h264 track recieve p frame");
             }
             Track::inputFrame(frame);
         }
@@ -73,7 +78,7 @@ void H264Track::insertConfigFrame(FramePtr frame) {
         spsFrame->_buffer->append(0x00); 
         spsFrame->_buffer->append(0x01); 
         spsFrame->_buffer->append(_sps.c_str(), _sps.size());
-        std::cout << "out put sps frame" << std::endl;
+        LOGI("%s", "out put sps frame");
         Track::inputFrame(spsFrame);
     }
     if (!_pps.empty()) {
@@ -88,7 +93,7 @@ void H264Track::insertConfigFrame(FramePtr frame) {
         ppsFrame->_buffer->append(0x00); 
         ppsFrame->_buffer->append(0x01); 
         ppsFrame->_buffer->append(_pps.c_str(), _pps.size());
-        std::cout << "out put pps frame" << std::endl;
+        LOGI("%s", "out put pps frame");
         Track::inputFrame(ppsFrame);
     }
 }

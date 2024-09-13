@@ -48,9 +48,9 @@ void SignalInterface::setReadCb(readCb cb) {
 bool HttpClient::connectPeer(const std::string& address) {
     if (!_client) {
         //eg: https://video.whatsgps.com:1443/47.236.232.146-20443/index/api/webrtc?app=jtt1078&stream=020091590684_1_0&type=play"
-        std::vector<std::string> vec = splitStrWithSeparator(address.c_str() + strlen("https://"), "/"); 
+        std::vector<std::string> vec = splitStrWithSeparator(address.c_str() + strlen("http://"), "/"); 
         if (vec.empty()) {
-            LOG_ERROR("bad https=%s address", address.c_str());
+            LOGE("bad https=%s address", address.c_str());
             return false;
         }     
         
@@ -61,18 +61,16 @@ bool HttpClient::connectPeer(const std::string& address) {
         
         std::vector<std::string> dominAndPort = splitStrWithSeparator(vec[0], ":"); 
         if (dominAndPort.size() != 2) {
-            dominAndPort.push_back("443");
+            dominAndPort.push_back("80");
         }
 
-        std::cout << "http peer ip=" << dominAndPort[0] << " port=" << dominAndPort[1] << std::endl; 
-        _client = std::make_shared<httplib::SSLClient>(dominAndPort[0], std::atoi(dominAndPort[1].c_str()));
+        _client = std::make_shared<httplib::Client>(dominAndPort[0], std::atoi(dominAndPort[1].c_str()));
     }
 
     return true;
 }
 
 void HttpClient::sendReq(const std::string& body) {
-    std::cout << "send http request to peer" << std::endl;
     httplib::Result res = _client->Post(_url.c_str(), body.c_str(), body.size(), "text/plain;charset=UTF-8");
     if (res) {
         json j = json::parse(res->body);
@@ -84,13 +82,12 @@ void HttpClient::sendReq(const std::string& body) {
                 break;
             }
         } 
-        std::cout << "get remote sdp" << std::endl;
     
     } else {
         //if (_readCb) {
         //    _readCb(SignalErr::TIMEOUT, res.error());
         //}
-        std::cout << "http request failed, reason=" << res.error() << std::endl;
+        LOGE("%s", "http request failed");
     }
 }
 

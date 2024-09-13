@@ -25,6 +25,8 @@ public:
 
     virtual int send(const char* data, int32_t size) = 0;
 
+    virtual int setReadTimeout(uint32_t) = 0;
+
     virtual void read() = 0;
 
     virtual int close() = 0;
@@ -46,6 +48,8 @@ public:
 
     int send(const char* data, int32_t size) override;
     
+    int setReadTimeout(uint32_t) override;
+    
     void read() override;
 
     int close() override;
@@ -59,6 +63,8 @@ public:
     int connect(std::string& peerIp, int32_t port) override;
 
     int send(const char* data, int32_t size) override;
+    
+    int setReadTimeout(uint32_t) override;
     
     void read() override;
 

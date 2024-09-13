@@ -370,8 +370,6 @@ void Sdp::parse(const std::string& sdp) {
                     MediaPayloadPtr payload = std::make_shared<MediaPayload>();
                     payload->payloadType = std::atoi((*iter).c_str());
                     audioDesc->payloads.push_back(payload);
-                
-                    std::cout << "push back audio payload type=" << payload->payloadType << std::endl;
                 }
             } 
 
@@ -432,7 +430,6 @@ std::string Sdp::payloadInfoLst(const MediaDescPtr media) {
 } 
 
 MediaDescPtr Sdp::videoDesc(void) {
-    std::cout << "medias size=" << medias.size() << std::endl;
     for (auto media : medias) {
         if (media->type == "video") {
             return media;
