@@ -73,7 +73,13 @@ bool HttpClient::connectPeer(const std::string& address) {
 void HttpClient::sendReq(const std::string& body) {
     httplib::Result res = _client->Post(_url.c_str(), body.c_str(), body.size(), "text/plain;charset=UTF-8");
     if (res) {
-        json j = json::parse(res->body);
+        json j;
+        try {
+            j = json::parse(res->body);
+        } catch(std::exception& e) {
+            LOGE("parse json sdp failed, reason=%s", e.what());
+            return;
+        } 
         for (auto& iter : j.items()) {
             if (iter.key() == "sdp") {
                 if (_readCb) {

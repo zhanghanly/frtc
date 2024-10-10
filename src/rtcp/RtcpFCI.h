@@ -240,8 +240,8 @@ private:
 //    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 class FCI_NACK {
 public:
-    static constexpr size_t kSize = 4;
-    static constexpr size_t kBitSize = 16;
+    static size_t kSize;
+    static size_t kBitSize;
 
     FCI_NACK(uint16_t pid_h, const std::vector<bool> &type);
 

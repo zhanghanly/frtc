@@ -11,7 +11,9 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#ifdef __ANDROID__
 #include <android/log.h>
+#endif
 #include <condition_variable>
 
 namespace frtc {
@@ -289,15 +291,34 @@ pid_t gettid();
     } while (0)
 
 
+#ifdef __ANDROID__
 
 #define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, "frtc", __VA_ARGS__)
 
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG  , "frtc", __VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, "frtc", __VA_ARGS__)
 
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO   , "frtc", __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "frtc", __VA_ARGS__)
 
-#define LOGW(...) __android_log_print(ANDROID_LOG_WARN   , "frtc", __VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, "frtc", __VA_ARGS__)
 
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR  , "frtc", __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "frtc", __VA_ARGS__)
+
+#else
+
+#define LOGV(format, ...) \
+          	printf(format"\n", ##__VA_ARGS__)
+#define LOGD(format, ...) \
+          	printf(format, ##__VA_ARGS__)
+
+#define LOGI(format, ...) \
+          	printf(format"\n", ##__VA_ARGS__)
+
+#define LOGW(format, ...) \
+          	printf(format, ##__VA_ARGS__)
+
+#define LOGE(format, ...) \
+          	printf(format, ##__VA_ARGS__)
+
+#endif
 
 #endif

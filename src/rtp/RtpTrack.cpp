@@ -31,6 +31,7 @@ RtpPacket::Ptr RtpTrack::inputRtp(MediaType type, int sample_rate, uint8_t* ptr,
     //}
     if (!sample_rate) {
         //无法把时间戳转换成毫秒
+        LOGI("%s", "rtp not samplate");
         return nullptr;
     }
     RtpHeader* header = (RtpHeader*)ptr;
@@ -47,7 +48,7 @@ RtpPacket::Ptr RtpTrack::inputRtp(MediaType type, int sample_rate, uint8_t* ptr,
     if (_pt == 0xFF) {
         _pt = header->pt;
     } else if (header->pt != _pt) {
-        //TraceL << "rtp pt mismatch:" << (int) header->pt << " !=" << (int) _pt;
+        LOGI("rtp pt mismatch:%d->%d", (int)header->pt, (int)_pt);
         return nullptr;
     }
 
@@ -127,6 +128,9 @@ void RtpTrackImp::onRtpSorted(RtpPacket::Ptr rtp) {
 }
 
 void RtpTrackImp::onBeforeRtpSorted(const RtpPacket::Ptr &rtp) {
+    if (rtp->type == MediaType::video) {
+        LOGI("origin video rtp seq=%d  ssrc=%u", (int)(rtp->getSeq()), rtp->getSSRC());
+    }
     if (_on_before_sorted) {
         _on_before_sorted(rtp);
     }

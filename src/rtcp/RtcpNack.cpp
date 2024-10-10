@@ -1,5 +1,6 @@
 #include "RtcpNack.h"
 #include "Utility.h"
+#include "Log.h"
 
 namespace frtc {
 
@@ -134,6 +135,8 @@ void NackContext::received(uint16_t seq, bool is_rtx) {
     auto max_seq = *_seq.rbegin();
     auto min_seq = *_seq.begin();
     auto diff = max_seq - min_seq;
+    LOGI("max_seq=%d min_seq=%d diff=%d nack_seq=%d", (int)max_seq, (int)min_seq, (int)diff, (int)_nack_seq);    
+    
     if (diff > (UINT16_MAX >> 1)) {
         // 回环后，收到回环前的大值seq, 忽略掉
         _seq.erase(max_seq);
@@ -153,7 +156,7 @@ void NackContext::makeNack(uint16_t max_seq, bool flush) {
     // 尝试移除前面部分连续的seq
     eraseFrontSeq();
     // 最多生成5个nack包，防止seq大幅跳跃导致一直循环
-    auto max_nack = 5u;
+    auto max_nack = 10u;
     //GET_CONFIG(uint32_t, nack_rtpsize, Rtc::kNackRtpSize);
     uint32_t nack_rtpsize = kNackRtpSize;
     // kNackRtpSize must between 0 and 16
@@ -170,6 +173,8 @@ void NackContext::makeNack(uint16_t max_seq, bool flush) {
         for (size_t i = 0; i < nack_rtp_count; ++i) {
             vec[i] = _seq.find((uint16_t)(_nack_seq + i + 2)) == _seq.end();
         }
+        
+        LOGI("nack seq=%d", (int)(_nack_seq + 1));
         doNack(FCI_NACK(_nack_seq + 1, vec), true);
         _nack_seq += nack_rtp_count + 1;
         // 返回第一个比_last_max_seq大的元素
@@ -288,6 +293,7 @@ uint64_t NackContext::reSendNack() {
         if (inc > (ssize_t)FCI_NACK::kBitSize) {
             // 新的nack包
             doNack(FCI_NACK(pid, vec), false);
+            LOGI("resend nack seq=%d", pid);
             pid = -1;
             continue;
         }
@@ -297,6 +303,7 @@ uint64_t NackContext::reSendNack() {
     }
     if (pid != -1) {
         doNack(FCI_NACK(pid, vec), false);
+        LOGI("resend nack seq=%d", pid);
     }
 
     // 没有任何包需要重传时返回0，否则返回下次重传间隔(不得低于5ms)

@@ -1,6 +1,5 @@
 #include <iostream>
 #include <srtp2/srtp.h>
-#include <android/log.h>
 #include "RtcContext.h"
 #include "StunPacket.h"
 #include "rtp/RtpPacket.h"
@@ -200,6 +199,8 @@ void RtcContext::dispatchPeerData(char* data, int32_t size) {
     
     } else if (isRtcp(data, size)) {
         return onRtcpData(data, size);
+    } else {
+        LOGI("%s", "unknown type udp data");
     }
 }
     
@@ -211,6 +212,8 @@ void RtcContext::sendRtcpPacket(const char* data, int len) {
     if (_srtpSessionSend->EncryptRtcp(reinterpret_cast<uint8_t*>(pkt->data()), &len)) {
         pkt->setSize(len);
         send(pkt->data(), pkt->size());
+
+        LOGI("%s", "RtcContext sendRtcpPacket");
     }
 }
     

@@ -229,6 +229,9 @@ void RtcTransport::onSortedRtp(MediaTrack& track, const std::string& rid, RtpPac
             _rr_ticker->resetTime();
         }
     }
+    if (rtp->type == MediaType::video) {
+        LOGI("sorted video seq=%d", rtp->getSeq());
+    }
 }
     
 void RtcTransport::onSendNack(MediaTrack& track, const FCI_NACK& nack, uint32_t ssrc) {
@@ -239,7 +242,7 @@ void RtcTransport::onSendNack(MediaTrack& track, const FCI_NACK& nack, uint32_t 
         _context->sendRtcpPacket((char*)rtcp.get(), rtcp->getSize());
     }
 
-    LOGI("%s", "send rtcp nack request");
+    LOGI("send rtcp nack request, ssrc=%d, ssrc_media=%d", track.answer_rtp_ssrc, ssrc);
 }
     
 void RtcTransport::onSendTwcc(uint32_t ssrc, const std::string& twcc_fci) {

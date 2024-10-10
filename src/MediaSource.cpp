@@ -8,10 +8,10 @@ MediaSource::MediaSource()
             : _allTrackReady(false) {}
 
 void MediaSource::addTrack(TrackPtr track) { 
-    if (_allTrackReady) {
-        LOGW("%s", "come too late, all tracks are ready"); 
-        return;
-    }
+    //if (_allTrackReady) {
+    //    LOGW("%s", "come too late, all tracks are ready"); 
+    //    return;
+    //}
     
     auto trackType = track->mediaType();
     _trackMap[trackType] = track;
@@ -35,7 +35,7 @@ void MediaSource::checkTrackIfReady(void) {
     if (_allTrackReady) {
         return;
     }
-    if (_trackMap.size() == 2) {
+    if (_trackMap.size() >= 1) {
         for (auto& item : _cachedFrame) {
             for (auto& frame : item.second) {
                 _trackMap[item.first]->inputFrame(frame);

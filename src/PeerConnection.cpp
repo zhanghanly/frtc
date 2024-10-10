@@ -104,6 +104,12 @@ std::string PeerConnection::replaceUrl(const std::string& webrtcUrl) {
         httpUrl += webrtcUrl.c_str() + 6;
         LOGI("new url=%s", httpUrl.c_str());
 
+        //std::vector<std::string> tmpUrl = splitStrWithSeparator(httpUrl, "8888"); 
+        //std::string newUrl = tmpUrl[0];
+        //newUrl += "9999";
+        //newUrl += tmpUrl[1];
+
+        //return newUrl;
         return httpUrl;
     }
 

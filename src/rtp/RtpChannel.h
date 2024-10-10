@@ -2,6 +2,7 @@
 #define FRTC_RTP_CHANNEL_H
 
 #include <functional>
+#include "Ticker.h"
 #include "RtpTrack.h"
 #include "rtcp/RtcpFCI.h"
 #include "rtcp/RtcpContext.h"
@@ -16,9 +17,10 @@ public:
         setOnSorted(std::move(cb));
         //设置jitter buffer参数
         //GET_CONFIG(uint32_t, nack_maxms, Rtc::kNackMaxMS);
-        uint32_t nack_maxms = 5000;
+        uint32_t nack_maxms = 1000;
         RtpTrackImp::setParams(1024, nack_maxms, 512);
         _nack_ctx.setOnNack([this](const FCI_NACK& nack) { onNack(nack); });
+        _nack_ticker = std::make_shared<Ticker>();
     }
 
     RtpPacket::Ptr inputRtp(MediaType type, int sample_rate, uint8_t* ptr, size_t len, bool is_rtx) {
@@ -32,6 +34,11 @@ public:
             // 统计rtp接受情况，便于生成nack rtcp包
             _rtcp_context.onRtp(seq, rtp->getStamp(), rtp->ntp_stamp, sample_rate, len);
         }
+        if (_nack_ticker->elapsedTime() > 200) {
+            _nack_ctx.reSendNack();
+            _nack_ticker->resetTime();
+        }
+        
         return rtp;
     }
 
@@ -77,6 +84,7 @@ private:
     }
 
 private:
+    TickerSp _nack_ticker;
     NackContext _nack_ctx;
     RtcpContextForRecv _rtcp_context;
     std::function<void(const FCI_NACK& nack)> _on_nack;

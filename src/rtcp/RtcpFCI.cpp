@@ -158,6 +158,9 @@ std::string FCI_REMB::dumpString() const {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+size_t FCI_NACK::kSize = 4;
+
+size_t FCI_NACK::kBitSize = 16;
 
 FCI_NACK::FCI_NACK(uint16_t pid_h, const std::vector<bool> &type) {
     assert(type.size() <= kBitSize);

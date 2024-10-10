@@ -52,7 +52,9 @@ public:
             _started = true;
             _last_seq_out = seq - 1;
         }
+        
         auto next_seq = static_cast<SEQ>(_last_seq_out + 1);
+        LOGI("next_seq=%d seq=%d", (int)next_seq, (int)seq);
         if (seq == next_seq) {
             // 收到下一个seq
             output(seq, std::move(packet));
@@ -62,12 +64,14 @@ public:
         }
 
         if (seq < next_seq && !mayLooped(next_seq, seq)) {
+            LOGI("drop seq=%d", (int)seq);
             // 无回环风险, 过滤seq回退包
             return;
         }
         _pkt_sort_cache_map.emplace(seq, std::move(packet));
 
         if (needForceFlush(seq)) {
+            LOGI("%s", "force flush jitter buffer");
             forceFlush(next_seq);
         }
     }
@@ -171,11 +175,11 @@ private:
 private:
     bool _started = false;
     // 排序缓存最大保存数据长度，单位毫秒
-    size_t _max_buffer_ms = 1000;
+    size_t _max_buffer_ms = 100;
     // 排序缓存最大保存数据个数
-    size_t _max_buffer_size = 1024;
+    size_t _max_buffer_size = 256;
     // seq最大跳跃距离
-    size_t _max_distance = 256;
+    size_t _max_distance = 128;
     // 记录上次output至今的时间
     TickerSp _ticker;
     // 最近输入的seq

@@ -172,12 +172,11 @@ void H264RtpDecoder::outputFrame(const RtpPacket::Ptr &rtp, const H264Frame::Ptr
         //rtsp没有dts，那么根据pts排序算法生成dts
         _dts_generator.getDts(frame->_pts, frame->_dts);
     }
-
     if (frame->keyFrame() && _gop_dropped) {
         _gop_dropped = false;
         //InfoL << "new gop received, rtp:\r\n" << rtp->dumpString();
     }
-    if (!_gop_dropped) {
+    if (!_gop_dropped || frame->configFrame()) {
         //RtpCodec::inputFrame(frame);
         LOGI("%s", "h264 RtpDecoder output video frame"); 
         RtpDecoder::outputFrame(frame); 
