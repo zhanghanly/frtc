@@ -7,8 +7,8 @@
 #include <limits>
 #include <map>
 #include "RtpPacket.h"
-#include "Ticker.h"
-#include "Log.h"
+#include "base/Ticker.h"
+#include "base/Log.h"
 
 namespace frtc {
 

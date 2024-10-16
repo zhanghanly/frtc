@@ -1,7 +1,6 @@
-#include <iostream>
 #include "PeerConnection.h"
 #include "FrtcApi.h"
-#include "Log.h"
+#include "base/Log.h"
 
 void* frtcCreateCtx(void) {
     frtc::PeerConnection* peer = new frtc::PeerConnection();

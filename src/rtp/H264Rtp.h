@@ -2,10 +2,10 @@
 #define FRTC_H264_RTP_H
 
 #include <memory>
+#include "base/Stamp.h"
+#include "media/Frame.h"
+#include "media/H264.h"
 #include "RtpPacket.h"
-#include "Frame.h"
-#include "H264.h"
-#include "Stamp.h"
 #include "RtpDecoder.h"
 
 namespace frtc {

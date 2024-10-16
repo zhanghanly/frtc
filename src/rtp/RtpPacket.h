@@ -3,8 +3,8 @@
 
 #include <cstdint>
 #include <string>
-#include "RawBuffer.h"
-#include "MediaCodec.h"
+#include "base/RawBuffer.h"
+#include "media/MediaCodec.h"
 
 namespace frtc {
 

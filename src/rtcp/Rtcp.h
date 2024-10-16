@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <vector>
-#include "RawBuffer.h"
+#include "base/RawBuffer.h"
 
 namespace frtc {
 
